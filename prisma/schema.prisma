@@ -1,13 +1,62 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int      @id @default(autoincrement())
+  email           String   @unique
+  name            String?
+  password        String
+  role            Role     @default(USER)
+  isEmailVerified Boolean  @default(false)
+  isDeleted Boolean @default(false)
+  deleteAt DateTime? 
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Token           Token[]
+  scrapeConfigs ScrapeConfig[]
+}
+
+model Token {
+  id          Int       @id @default(autoincrement())
+  token       String
+  type        TokenType
+  expires     DateTime
+  blacklisted Boolean
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id],onDelete: Cascade)
+  userId      Int
+}
+
+model ScrapeConfig{
+id          Int       @id @default(autoincrement())
+  url  String 
+  selector String
+  subSelector String?
+  type ScrapingType  @default(TEXT)
+  createdAt   DateTime  @default(now())
+  attribute   String? 
+  user        User      @relation(fields: [userId], references: [id],onDelete: Cascade)
+  userId      Int
+}
+enum ScrapingType {
+  TEXT
+  ATTR
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+  RESET_PASSWORD
+  VERIFY_EMAIL
 }
