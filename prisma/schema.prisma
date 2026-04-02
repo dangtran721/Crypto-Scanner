@@ -8,55 +8,160 @@ datasource db {
 }
 
 model User {
-  id              Int      @id @default(autoincrement())
-  email           String   @unique
-  name            String?
-  password        String
-  role            Role     @default(USER)
-  isEmailVerified Boolean  @default(false)
-  isDeleted Boolean @default(false)
-  deleteAt DateTime? 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  Token           Token[]
-  scrapeConfigs ScrapeConfig[]
+  id         Int         @id @default(autoincrement())
+  name       String?
+  email      String      @unique
+  password   String
+  role       Role        @default(USER)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  
+  indicators  Indicator[]
+  scanRules   ScanRule[]
+  watchlists  Watchlist[]
+  scanJobs    ScanJob[]
+  alerts      Alert[]
+  tokens      Token[]
+
+  @@map("users") 
+}
+
+model Indicator {
+  id        Int           @id @default(autoincrement())
+  userId    Int           @map("user_id")
+  type      IndicatorType
+  config    Json
+  createdAt DateTime      @default(now()) @map("created_at")
+  
+
+  user      User          @relation(fields: [userId], references: [id])
+  scanRules ScanRule[]
+
+  @@map("indicators")
+}
+
+model ScanRule {
+  id          Int        @id @default(autoincrement())
+  userId      Int        @map("user_id")
+  indicatorId Int        @map("indicator_id")
+  logic       Json
+  createdAt   DateTime   @default(now()) @map("created_at")
+  
+
+  user      User      @relation(fields: [userId], references: [id])
+  indicator Indicator @relation(fields: [indicatorId], references: [id])
+  scanJobs  ScanJob[]
+  alerts    Alert[]
+
+  @@map("scan_rules")
+}
+
+model Watchlist {
+  id        Int             @id @default(autoincrement())
+  userId    Int             @map("user_id")
+  name      String
+  
+
+  user      User            @relation(fields: [userId], references: [id])
+  items     WatchlistItem[]
+  scanJobs  ScanJob[]
+
+  @@map("watchlist")
+}
+
+model WatchlistItem {
+  id          Int       @id @default(autoincrement())
+  watchlistId Int       @map("watchlist_id")
+  coinSymbol  String    @map("coin_symbol")
+  
+
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id])
+
+  @@map("watchlist_item")
+}
+
+model ScanJob {
+  id         Int          @id @default(autoincrement())
+  userId     Int          @map("user_id")
+  scanRuleId Int          @map("scan_rule_id")
+  watchlistId Int         @map("watchlist_id")
+  status     Status      
+  createdAt  DateTime     @default(now()) @map("created_at")
+  
+  user      User         @relation(fields: [userId], references: [id])
+  scanRule  ScanRule     @relation(fields: [scanRuleId], references: [id])
+  watchlist Watchlist    @relation(fields: [watchlistId], references: [id])
+  results   ScanResult[]
+
+  @@map("scan_jobs")
+}
+
+model ScanResult {
+  id           Int      @id @default(autoincrement())
+  jobId        Int      @map("job_id")
+  coinSymbol   String   @map("coin_symbol")
+  result       Json
+  isValidSetup Boolean  @map("is_valid_setup")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  job       ScanJob  @relation(fields: [jobId], references: [id])
+
+  @@map("scan_results")
+}
+
+model Alert {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  scanRuleId Int       @map("scan_rule_id")
+  type       AlertType
+  isEnabled  Boolean   @default(true) @map("is_enabled")
+  config Json?
+  
+  user     User     @relation(fields: [userId], references: [id])
+  scanRule ScanRule @relation(fields: [scanRuleId], references: [id])
+
+  @@map("alerts")
 }
 
 model Token {
   id          Int       @id @default(autoincrement())
-  token       String
+  token       String    @unique
   type        TokenType
   expires     DateTime
-  blacklisted Boolean
+  blacklisted Boolean   @default(false)
   createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id],onDelete: Cascade)
-  userId      Int
-}
+  userId      Int       @map("user_id")
+  
+  user User @relation(fields: [userId], references: [id])
 
-model ScrapeConfig{
-id          Int       @id @default(autoincrement())
-  url  String 
-  selector String
-  subSelector String?
-  type ScrapingType  @default(TEXT)
-  createdAt   DateTime  @default(now())
-  attribute   String? 
-  user        User      @relation(fields: [userId], references: [id],onDelete: Cascade)
-  userId      Int
-}
-enum ScrapingType {
-  TEXT
-  ATTR
+  @@map("tokens")
 }
 
 enum Role {
-  USER
   ADMIN
+  USER
+}
+
+enum IndicatorType {
+  RSI
+  EMA
+  ICHIMOKU
+}
+
+enum AlertType {
+  EMAIL
+  TELEGRAM
 }
 
 enum TokenType {
-  ACCESS
   REFRESH
+  ACCESS
   RESET_PASSWORD
-  VERIFY_EMAIL
+}
+
+enum Status {
+PENDING 
+RUNNING 
+COMPLETED
+FAILED
 }
