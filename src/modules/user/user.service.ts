@@ -1,26 +1,68 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { encryptPassword } from 'src/utils/encryption';
+import { User } from '@prisma/client';
+import { UserArgs } from '@prisma/client/runtime/client.js';
 
 @Injectable()
 export class UserService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(private prisma: PrismaService) {}
+
+  async getUserById(id: number): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new ConflictException('User does not exist');
+    }
+    return user;
+  }
+  async getUserByEmail(email: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new ConflictException('User does not exist');
+    }
+    return user;
+  }
+
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: createUserDto.email },
+    });
+    if (existingUser) {
+      throw new ConflictException('Email already exists');
+    }
+
+    return this.prisma.user.create({
+      data: {
+        email: createUserDto.email,
+        password: await encryptPassword(createUserDto.password),
+        name: createUserDto.name,
+        role: createUserDto.role,
+      },
+    });
   }
 
   findAll() {
-    return `This action returns all user`;
+    return this.prisma.user.findMany();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    await this.getUserById(+id);
+    return await this.prisma.user.update({
+      where: { id },
+      data: {
+        email: updateUserDto.email,
+        name: updateUserDto.name,
+        password: updateUserDto.password,
+        role: updateUserDto.role,
+      },
+    });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: number): Promise<User> {
+    const user = await this.getUserById(+id);
+    await this.prisma.user.delete({ where: { id: user.id } });
+    return user;
   }
 }
