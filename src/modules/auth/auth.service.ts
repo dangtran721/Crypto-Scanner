@@ -1,26 +1,28 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
-
+import { ConflictException, Injectable } from '@nestjs/common';
+import { UserService } from '../user/user.service';
+import { User } from '@prisma/client';
+import { AuthRegisterDto, AuthLoginDto } from './dto';
+import { encryptPassword, isPasswordMatch } from 'src/utils/encryption';
+import { Users } from '../user/entities/user.entity';
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(private readonly userService: UserService) {}
+
+  async register(AuthRegisterDto: AuthRegisterDto): Promise<Users> {
+    const user = await this.userService.createUser(AuthRegisterDto);
+    return new Users(user);
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async loginWithEmailAndPassword(AuthLoginDto: AuthLoginDto): Promise<Users> {
+    const user = await this.userService.getUserByEmail(AuthLoginDto.email);
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    if (!user) {
+      throw new ConflictException('Invalid credentials');
+    }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    if (!(await isPasswordMatch(AuthLoginDto.password, user.password))) {
+      throw new ConflictException('Password does not match');
+    }
+    return new Users(user);
   }
 }

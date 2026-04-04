@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
-import { IsEmail, IsNotEmpty, isNumber, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
-export class CreateUserDto {
+export class AuthRegisterDto {
   @IsNotEmpty()
   @IsEmail()
   email: string;
@@ -9,5 +9,5 @@ export class CreateUserDto {
   password: string;
   @MinLength(3)
   name: string;
-  role: Role = Role.ADMIN;
+  role: Role = Role.USER;
 }

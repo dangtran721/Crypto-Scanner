@@ -4,7 +4,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { encryptPassword } from 'src/utils/encryption';
 import { User } from '@prisma/client';
-import { UserArgs } from '@prisma/client/runtime/client.js';
 
 @Injectable()
 export class UserService {
@@ -17,23 +16,18 @@ export class UserService {
     }
     return user;
   }
-  async getUserByEmail(email: string): Promise<User> {
+
+  async getUserByEmail(email: string): Promise<User | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      throw new ConflictException('User does not exist');
-    }
     return user;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: createUserDto.email },
-    });
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    const existingUser = await this.getUserByEmail(createUserDto.email);
     if (existingUser) {
       throw new ConflictException('Email already exists');
     }
-
-    return this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email: createUserDto.email,
         password: await encryptPassword(createUserDto.password),
@@ -41,6 +35,7 @@ export class UserService {
         role: createUserDto.role,
       },
     });
+    return user;
   }
 
   findAll() {
