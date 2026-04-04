@@ -23,20 +23,23 @@ export class UserController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.userService.create(createUserDto);
+    return this.userService.createUser(createUserDto);
   }
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   findAll() {
     return this.userService.findAll();
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string): Promise<User | null> {
     return this.userService.getUserById(+id);
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -45,6 +48,7 @@ export class UserController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string): Promise<User> {
     return this.userService.remove(+id);
   }
