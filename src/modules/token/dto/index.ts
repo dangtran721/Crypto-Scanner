@@ -1,1 +1,1 @@
-export * from './create-token.dto';
+export * from './save-token.dto';
