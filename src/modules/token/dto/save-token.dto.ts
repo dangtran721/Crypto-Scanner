@@ -8,7 +8,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 
-export class CreateTokenDto {
+export class SaveTokenDto {
   @IsString()
   token: string;
 

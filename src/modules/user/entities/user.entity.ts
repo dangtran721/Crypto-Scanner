@@ -1,18 +1,18 @@
 import { Exclude, Expose } from 'class-transformer';
 import { Role } from '@prisma/client';
-@Exclude()
+import type { AuthTokensResponse } from 'src/common/types';
+
 export class Users {
   id: number;
-  @Expose()
   email: string;
-
-  @Expose()
   name: string | null;
+  token?: AuthTokensResponse;
 
+  @Exclude()
   role: Role = Role.USER;
+
+  @Exclude()
   password: string;
-  createdAt: Date;
-  updatedAt: Date;
 
   constructor(partial: Partial<Users>) {
     Object.assign(this, partial);

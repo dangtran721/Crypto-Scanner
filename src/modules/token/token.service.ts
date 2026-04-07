@@ -1,20 +1,72 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateTokenDto } from './dto';
-import { Token } from '@prisma/client';
+import { SaveTokenDto } from './dto';
+import { Token, TokenType } from '@prisma/client';
+import { AuthTokensResponse, jwtUser } from 'src/common/types';
+import dayjs from 'dayjs';
+import { GenerateTokenDto } from './dto/generate-token.dto';
+import { ConfigService } from '@nestjs/config';
+import { AllTypeConfig } from 'src/common/config/config.type';
 
 @Injectable()
 export class TokenService {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
+    private configService: ConfigService<AllTypeConfig>,
   ) {}
-  async generateToken(userId: number): Promise<string> {
-    return await this.jwtService.signAsync({ sub: userId });
+  async generateToken(dto: GenerateTokenDto): Promise<string> {
+    const payload = {
+      sub: dto.userId,
+      type: dto.tokenType,
+    };
+    return await this.jwtService.signAsync(payload, {
+      expiresIn: dayjs(dto.expires).diff(dayjs(), 'second'),
+    });
   }
-  async saveToken(CreateTokenDto: CreateTokenDto): Promise<Token> {
-    return await this.prisma.token.create({ data: CreateTokenDto });
+  async saveToken(dto: SaveTokenDto): Promise<Token> {
+    return await this.prisma.token.create({ data: dto });
   }
-  //async generateAuthToken();
+  async generateAuthTokens({ id }: jwtUser): Promise<AuthTokensResponse> {
+    const accessTokenExpires = dayjs()
+      .add(
+        this.configService.getOrThrow('auth.expires', { infer: true }),
+        'minute',
+      )
+      .toDate();
+    const accessToken = await this.generateToken({
+      userId: id,
+      expires: accessTokenExpires,
+      tokenType: TokenType.ACCESS,
+    });
+
+    const refreshTokenExpires = dayjs()
+      .add(
+        this.configService.getOrThrow('auth.refreshExpires', { infer: true }),
+        'day',
+      )
+      .toDate();
+    const refreshToken = await this.generateToken({
+      userId: id,
+      expires: refreshTokenExpires,
+      tokenType: TokenType.REFRESH,
+    });
+    await this.saveToken({
+      token: refreshToken,
+      userId: id,
+      expires: refreshTokenExpires,
+      type: TokenType.REFRESH,
+    });
+    return {
+      access: {
+        token: accessToken,
+        expires: accessTokenExpires,
+      },
+      refresh: {
+        token: refreshToken,
+        expires: refreshTokenExpires,
+      },
+    };
+  }
 }
