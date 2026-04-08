@@ -2,7 +2,7 @@ export interface TokenResponse {
   token: string;
   expires: Date;
 }
-export interface AuthTokensResponse {
+export interface AuthTokensResponseType {
   access: TokenResponse;
   refresh?: TokenResponse;
 }

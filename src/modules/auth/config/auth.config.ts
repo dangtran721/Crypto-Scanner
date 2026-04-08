@@ -2,7 +2,7 @@ import { registerAs } from '@nestjs/config';
 import { z } from 'zod';
 import { AuthConfig } from './auth-config.type';
 const envSchema = z.object({
-  JWT_SECRET: z.string().min(1),
+  AUTH_JWT_SECRET: z.string().min(1),
   AUTH_ACCESS_TOKEN_EXPIRES_IN: z.coerce.number().default(15),
   AUTH_REFRESH_TOKEN_EXPIRES_IN: z.coerce.number().default(7),
 });
@@ -15,7 +15,7 @@ export default registerAs<AuthConfig>('auth', () => {
   }
   const envVars = result.data;
   return {
-    secret: envVars.JWT_SECRET,
+    secret: envVars.AUTH_JWT_SECRET,
     expires: envVars.AUTH_ACCESS_TOKEN_EXPIRES_IN,
     refreshExpires: envVars.AUTH_REFRESH_TOKEN_EXPIRES_IN,
   };
