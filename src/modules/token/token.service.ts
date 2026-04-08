@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SaveTokenDto } from './dto';
 import { Token, TokenType } from '@prisma/client';
-import { AuthTokensResponse, jwtUser } from 'src/common/types';
+import { AuthTokensResponseType, jwtUser } from 'src/common/types';
 import dayjs from 'dayjs';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';
@@ -28,7 +28,7 @@ export class TokenService {
   async saveToken(dto: SaveTokenDto): Promise<Token> {
     return await this.prisma.token.create({ data: dto });
   }
-  async generateAuthTokens({ id }: jwtUser): Promise<AuthTokensResponse> {
+  async generateAuthTokens({ id }: jwtUser): Promise<AuthTokensResponseType> {
     const accessTokenExpires = dayjs()
       .add(
         this.configService.getOrThrow('auth.expires', { infer: true }),
@@ -52,6 +52,7 @@ export class TokenService {
       expires: refreshTokenExpires,
       tokenType: TokenType.REFRESH,
     });
+
     await this.saveToken({
       token: refreshToken,
       userId: id,
