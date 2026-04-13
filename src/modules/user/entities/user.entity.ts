@@ -6,7 +6,6 @@ export class Users {
   id: number;
   email: string;
   name: string | null;
-  token?: AuthTokensResponseType;
 
   @Exclude()
   role: Role = Role.USER;
