@@ -11,11 +11,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Token } from '@prisma/client';
+import { Token, type User } from '@prisma/client';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
 import { RefreshToken } from '../token/dto/refresh-token.dto';
 import { AuthResponseDto } from './dto/auth-response.entity';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthJwtGuard } from './guards';
+import { GetUser, Public } from 'src/common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -37,5 +38,18 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   logout(@Body() dto: RefreshToken): Promise<Token> {
     return this.authService.logout(dto);
+  }
+
+  @Get('me')
+  @UseGuards(AuthJwtGuard)
+  getMe(@GetUser() user: User) {
+    return user;
+  }
+
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() dto: RefreshToken) {
+    return this.authService.refreshAuth(dto);
   }
 }

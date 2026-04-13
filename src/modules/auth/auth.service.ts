@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from '../user/user.service';
 import { AuthRegisterDto, AuthLoginDto } from './dto';
 import { isPasswordMatch } from 'src/common/utils/encryption';
