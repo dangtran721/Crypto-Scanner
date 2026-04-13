@@ -13,10 +13,11 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from '@prisma/client';
-import { AuthGuard } from '@nestjs/passport';
+import { Role, User } from '@prisma/client';
+import { GetUser, Roles } from 'src/common/decorators';
+import { AuthJwtGuard, RolesGuard } from '../auth/guards';
 
-//@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthJwtGuard, RolesGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -28,6 +29,7 @@ export class UserController {
   }
 
   @Get()
+  @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   findAll() {
     return this.userService.findAll();
@@ -39,18 +41,19 @@ export class UserController {
     return this.userService.getUserById(+id);
   }
 
-  @Patch(':id')
+  @Patch('me')
   @HttpCode(HttpStatus.OK)
   update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
+    @GetUser('id') userId: number,
+    @Body()
+    updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.userService.update(+id, updateUserDto);
+    return this.userService.update(userId, updateUserDto);
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string): Promise<User> {
-    return this.userService.remove(+id);
+  remove(@GetUser('id') userId: number): Promise<User> {
+    return this.userService.remove(userId);
   }
 }

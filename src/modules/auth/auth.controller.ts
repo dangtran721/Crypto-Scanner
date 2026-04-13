@@ -8,13 +8,14 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Token, User } from '@prisma/client';
+import { Token } from '@prisma/client';
 import { AuthLoginDto, AuthRegisterDto } from './dto';
-import { Users } from '../user/entities/user.entity';
 import { RefreshToken } from '../token/dto/refresh-token.dto';
 import { AuthResponseDto } from './dto/auth-response.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
