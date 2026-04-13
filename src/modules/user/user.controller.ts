@@ -14,7 +14,7 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role, User } from '@prisma/client';
-import { GetUser, Roles } from 'src/common/decorators';
+import { GetUser, Public, Roles } from 'src/common/decorators';
 import { AuthJwtGuard, RolesGuard } from '../auth/guards';
 
 @UseGuards(AuthJwtGuard, RolesGuard)
@@ -23,6 +23,7 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
+  @Public()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.userService.createUser(createUserDto);
@@ -51,7 +52,7 @@ export class UserController {
     return this.userService.update(userId, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@GetUser('id') userId: number): Promise<User> {
     return this.userService.remove(userId);
