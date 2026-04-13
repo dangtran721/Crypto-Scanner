@@ -3,9 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -22,12 +19,14 @@ import { GetUser, Public } from 'src/common/decorators';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: AuthRegisterDto): Promise<AuthResponseDto> {
     return await this.authService.register(dto);
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: AuthLoginDto): Promise<AuthResponseDto> {

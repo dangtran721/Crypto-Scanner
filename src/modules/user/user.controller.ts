@@ -37,6 +37,7 @@ export class UserController {
   }
 
   @Get(':id')
+  @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   findOne(@Param('id') id: string): Promise<User | null> {
     return this.userService.getUserById(+id);
