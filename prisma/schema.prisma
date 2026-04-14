@@ -75,8 +75,9 @@ model WatchlistItem {
   coinSymbol  String    @map("coin_symbol")
   
 
-  watchlist   Watchlist @relation(fields: [watchlistId], references: [id])
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id],onDelete: Cascade)
 
+  @@unique([watchlistId, coinSymbol])
   @@map("watchlist_item")
 }
 
