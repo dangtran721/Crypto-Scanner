@@ -7,7 +7,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { encryptPassword } from 'src/common/utils/encryption';
-import { User } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -42,6 +42,7 @@ export class UserService {
       data: {
         ...createUserDto,
         password: hashedPassword,
+        role: Role.USER,
       },
     });
 

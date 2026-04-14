@@ -7,6 +7,7 @@ import { TokenModule } from './modules/token/token.module';
 import authConfig from './modules/auth/config/auth.config';
 import appConfig from './common/config/app.config';
 import { JwtModule } from '@nestjs/jwt';
+import { WatchlistsModule } from './modules/watchlists/watchlists.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
     PrismaModule,
     AuthModule,
     TokenModule,
+    WatchlistsModule,
   ],
 })
 export class AppModule {}
