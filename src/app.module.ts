@@ -8,6 +8,7 @@ import authConfig from './modules/auth/config/auth.config';
 import appConfig from './common/config/app.config';
 import { JwtModule } from '@nestjs/jwt';
 import { WatchlistsModule } from './modules/watchlists/watchlists.module';
+import { IndicatorModule } from './modules/indicator/indicator.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WatchlistsModule } from './modules/watchlists/watchlists.module';
     AuthModule,
     TokenModule,
     WatchlistsModule,
+    IndicatorModule,
   ],
 })
 export class AppModule {}
