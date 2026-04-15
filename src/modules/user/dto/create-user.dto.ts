@@ -9,5 +9,4 @@ export class CreateUserDto {
   password: string;
   @MinLength(3)
   name: string;
-  role: Role = Role.USER;
 }
