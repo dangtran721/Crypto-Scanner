@@ -1,40 +1,74 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateIndicatorDto } from './dto/create-indicator.dto';
 import { UpdateIndicatorDto } from './dto/update-indicator.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EmaStrategy } from './strategies';
-import { IndicatorType } from '@prisma/client';
+import { Indicator, IndicatorType } from '@prisma/client';
 import { IIndicatorStrategy } from './strategies/interface.strategy';
+import { indicatorConfigMap } from './config/indicator-config';
 
 @Injectable()
 export class IndicatorService {
   private strategyMap: Partial<Record<IndicatorType, IIndicatorStrategy>>;
   constructor(
     private prisma: PrismaService,
-    private emaStrategy: EmaStrategy,
+    private readonly strategies: IIndicatorStrategy[],
   ) {
-    this.strategyMap = {
-      [IndicatorType.EMA]: this.emaStrategy,
-    };
+    for (const strategy of strategies) {
+      this.strategyMap[strategy.getType()] = strategy;
+    }
   }
 
-  async create(dto: CreateIndicatorDto, userId: number) {
+  validateIndicator(dto: CreateIndicatorDto): void {
+    const schema = indicatorConfigMap[dto.type];
+    if (!schema) {
+      throw new BadRequestException('Unsupported indicator type');
+    }
+    schema.parse(dto.config);
+
+    const strategy = this.strategyMap[dto.type];
+    if (!strategy) {
+      throw new BadRequestException('Strategy not found');
+    }
+  }
+
+  async create(dto: CreateIndicatorDto, userId: number): Promise<Indicator> {
+    this.validateIndicator(dto);
     return await this.prisma.indicator.create({ data: { ...dto, userId } });
   }
 
-  findAll() {
-    return `This action returns all indicator`;
+  async findAll(userId: number): Promise<Indicator[]> {
+    return await this.prisma.indicator.findMany({ where: { userId } });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} indicator`;
+  async findOne(id: number, userId: number): Promise<Indicator> {
+    const indicator = await this.prisma.indicator.findFirst({
+      where: { id, userId },
+    });
+
+    if (!indicator) {
+      throw new NotFoundException(`Indicator not found `);
+    }
+    return indicator;
   }
 
-  update(id: number, updateIndicatorDto: UpdateIndicatorDto) {
-    return `This action updates a #${id} indicator`;
+  async update(
+    id: number,
+    dto: UpdateIndicatorDto,
+    userId: number,
+  ): Promise<Indicator> {
+    await this.findOne(id, userId);
+    return await this.prisma.indicator.update({
+      where: { id, userId },
+      data: { ...dto },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} indicator`;
+  async remove(id: number, userId: number): Promise<void> {
+    await this.findOne(id, userId);
+    await this.prisma.indicator.deleteMany({ where: { id, userId } });
   }
 }

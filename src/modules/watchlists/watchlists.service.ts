@@ -9,6 +9,7 @@ import { Watchlist, WatchlistItem } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AddWatchlistItemDto } from './dto/add-watchlist-item.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client.js';
+import { WatchlistResponseType } from './types/watchlist-response.type';
 
 @Injectable()
 export class WatchlistsService {
@@ -23,7 +24,7 @@ export class WatchlistsService {
     });
   }
 
-  async findAll(userId: number) {
+  async findAll(userId: number): Promise<WatchlistResponseType[]> {
     const watchlists = await this.prisma.watchlist.findMany({
       where: { userId },
       include: { items: { select: { coinSymbol: true } } },
