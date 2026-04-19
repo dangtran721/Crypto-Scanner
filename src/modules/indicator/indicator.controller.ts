@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { IndicatorService } from './indicator.service';
 import { CreateIndicatorDto } from './dto/create-indicator.dto';
@@ -21,6 +23,7 @@ export class IndicatorController {
   constructor(private readonly indicatorService: IndicatorService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateIndicatorDto,
     @GetUser('id') userId: number,
@@ -29,11 +32,13 @@ export class IndicatorController {
   }
 
   @Get()
+  @HttpCode(HttpStatus.OK)
   findAll(@GetUser('id') userId: number): Promise<Indicator[]> {
     return this.indicatorService.findAll(userId);
   }
 
   @Get(':id')
+  @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id') id: string,
     @GetUser('id') userId: number,
@@ -42,6 +47,7 @@ export class IndicatorController {
   }
 
   @Patch(':id')
+  @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
     @Body() updateIndicatorDto: UpdateIndicatorDto,
@@ -51,6 +57,7 @@ export class IndicatorController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id') id: string,
     @GetUser('id') userId: number,
