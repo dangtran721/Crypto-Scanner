@@ -6,30 +6,31 @@ import {
 import { CreateIndicatorDto } from './dto/create-indicator.dto';
 import { UpdateIndicatorDto } from './dto/update-indicator.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Indicator, IndicatorType } from '@prisma/client';
-import { IIndicatorStrategy } from './strategies/interface.strategy';
+import { Indicator } from '@prisma/client';
 import { indicatorConfigMap } from './config/indicator-config';
+import { StrategiesMap } from './strategies';
 
 @Injectable()
 export class IndicatorService {
-  private strategyMap: Partial<Record<IndicatorType, IIndicatorStrategy>>;
   constructor(
     private prisma: PrismaService,
-    private readonly strategies: IIndicatorStrategy[],
-  ) {
-    for (const strategy of strategies) {
-      this.strategyMap[strategy.getType()] = strategy;
-    }
-  }
+    private strategyMap: StrategiesMap,
+  ) {}
 
   validateIndicator(dto: CreateIndicatorDto): void {
     const schema = indicatorConfigMap[dto.type];
     if (!schema) {
       throw new BadRequestException('Unsupported indicator type');
     }
-    schema.parse(dto.config);
 
-    const strategy = this.strategyMap[dto.type];
+    try {
+      schema.parse(dto.config);
+    } catch (error) {
+      throw new BadRequestException('Invalid config for indicator');
+    }
+
+    const strategy = this.strategyMap.getStrategy(dto.type);
+
     if (!strategy) {
       throw new BadRequestException('Strategy not found');
     }
@@ -60,7 +61,16 @@ export class IndicatorService {
     dto: UpdateIndicatorDto,
     userId: number,
   ): Promise<Indicator> {
-    await this.findOne(id, userId);
+    const existing = await this.findOne(id, userId);
+
+    const type = dto.type ?? existing.type;
+    const config = dto.config ?? existing.config;
+
+    this.validateIndicator({
+      type,
+      config,
+    });
+
     return await this.prisma.indicator.update({
       where: { id, userId },
       data: { ...dto },

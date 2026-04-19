@@ -1,6 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
 import { Role } from '@prisma/client';
-import type { AuthTokensResponseType } from 'src/common/types';
 
 export class Users {
   id: number;
