@@ -1,3 +1,6 @@
-export interface IIndicatorStrategy {
-  calculate(data: number[], config: any);
+import { IndicatorType } from '@prisma/client';
+
+export interface IIndicatorStrategy<TConfig = unknown, TResult = unknown> {
+  getType(): IndicatorType;
+  calculate(data: number[], config: TConfig): TResult;
 }

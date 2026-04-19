@@ -7,8 +7,9 @@ import { TokenService } from '../token/token.service';
 import { RefreshToken } from '../token/dto/refresh-token.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Token } from '@prisma/client';
-import { AuthTokensResponseType } from 'src/common/types';
+
 import { AuthResponseDto } from './dto/auth-response.entity';
+import { AuthTokensResponseType } from './types/auth-token-response.type';
 @Injectable()
 export class AuthService {
   constructor(

@@ -3,11 +3,12 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SaveTokenDto } from './dto';
 import { Token, TokenType } from '@prisma/client';
-import { AuthTokensResponseType, jwtUser } from 'src/common/types';
+import { jwtUser } from 'src/common/types';
 import dayjs from 'dayjs';
 import { GenerateTokenDto } from './dto/generate-token.dto';
 import { ConfigService } from '@nestjs/config';
 import { AllTypeConfig } from 'src/common/config/config.type';
+import { AuthTokensResponseType } from '../auth/types/auth-token-response.type';
 
 @Injectable()
 export class TokenService {
