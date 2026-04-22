@@ -33,9 +33,7 @@ model Indicator {
   config    Json
   createdAt DateTime      @default(now()) @map("created_at")
   
-
   user      User          @relation(fields: [userId], references: [id])
-  scanRules ScanRule[]
 
   @@map("indicators")
 }
@@ -43,13 +41,11 @@ model Indicator {
 model ScanRule {
   id          Int        @id @default(autoincrement())
   userId      Int        @map("user_id")
-  indicatorId Int        @map("indicator_id")
   logic       Json
   createdAt   DateTime   @default(now()) @map("created_at")
   
 
   user      User      @relation(fields: [userId], references: [id])
-  indicator Indicator @relation(fields: [indicatorId], references: [id])
   scanJobs  ScanJob[]
   alerts    Alert[]
 
