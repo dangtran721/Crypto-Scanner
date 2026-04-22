@@ -8,6 +8,7 @@ import authConfig from './modules/auth/config/auth.config';
 import appConfig from './common/config/app.config';
 import { WatchlistsModule } from './modules/watchlists/watchlists.module';
 import { IndicatorModule } from './modules/indicator/indicator.module';
+import { ScanruleModule } from './modules/scanrule/scanrule.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { IndicatorModule } from './modules/indicator/indicator.module';
     TokenModule,
     WatchlistsModule,
     IndicatorModule,
+    ScanruleModule,
   ],
 })
 export class AppModule {}
