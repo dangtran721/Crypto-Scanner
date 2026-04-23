@@ -9,6 +9,8 @@ import appConfig from './common/config/app.config';
 import { WatchlistsModule } from './modules/watchlists/watchlists.module';
 import { IndicatorModule } from './modules/indicator/indicator.module';
 import { ScanruleModule } from './modules/scanrule/scanrule.module';
+import { ScanJobsModule } from './modules/scan-jobs/scan-jobs.module';
+import { ScannerModule } from './modules/scanner/scanner.module';
 
 @Module({
   imports: [
@@ -20,6 +22,8 @@ import { ScanruleModule } from './modules/scanrule/scanrule.module';
     WatchlistsModule,
     IndicatorModule,
     ScanruleModule,
+    ScanJobsModule,
+    ScannerModule,
   ],
 })
 export class AppModule {}
