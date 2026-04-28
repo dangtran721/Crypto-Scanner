@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { UserModule } from './modules/user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
@@ -11,6 +10,9 @@ import { IndicatorModule } from './modules/indicator/indicator.module';
 import { ScanruleModule } from './modules/scanrule/scanrule.module';
 import { ScanJobsModule } from './modules/scan-jobs/scan-jobs.module';
 import { ScannerModule } from './modules/scanner/scanner.module';
+import { MarketDataModule } from './modules/market-data/market-data.module';
+import { DashBoardModule } from './modules/dashboard/dashboard.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { ScannerModule } from './modules/scanner/scanner.module';
     ScanruleModule,
     ScanJobsModule,
     ScannerModule,
+    MarketDataModule,
+    DashBoardModule,
   ],
 })
 export class AppModule {}

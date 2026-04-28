@@ -3,7 +3,7 @@ import { IndicatorConfigMap } from '../types/indicator-config.type';
 import { IIndicatorStrategy } from './interface.strategy';
 import { IchimokuCloud } from 'technicalindicators';
 import { IndicatorType } from '@prisma/client';
-import { Candle } from '../types/candle.type';
+import { Candle } from 'src/common/types';
 
 type IchimokuConfig = IndicatorConfigMap['ICHIMOKU'];
 

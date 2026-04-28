@@ -6,7 +6,9 @@ import { IIndicatorStrategy } from './interface.strategy';
 @Injectable()
 // To avoid to the service able to get larger
 export class StrategiesMap {
-  private strategyMap: Partial<Record<IndicatorType, IIndicatorStrategy>> = {};
+  private strategyMap: Partial<
+    Record<IndicatorType, IIndicatorStrategy<any, any>>
+  > = {};
 
   constructor(
     private ema: EmaStrategy,
@@ -19,7 +21,7 @@ export class StrategiesMap {
       this.strategyMap[strategy.getType()] = strategy;
     }
   }
-  getStrategy(type: IndicatorType): IIndicatorStrategy | undefined {
+  getStrategy(type: IndicatorType): IIndicatorStrategy<any, any> | undefined {
     return this.strategyMap[type];
   }
 }

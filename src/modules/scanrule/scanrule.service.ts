@@ -8,26 +8,17 @@ import { UpdateScanruleDto } from './dto/update-scanrule.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ScanRule } from '@prisma/client';
 import { scanRuleConfig } from './config/scanrule-config';
+import { extractIndicatorIds } from 'src/common/utils';
 
 @Injectable()
 export class ScanruleService {
   constructor(private prisma: PrismaService) {}
 
-  extractIndicatorIds(data: any) {
-    const ids: number[] = [];
-    if (data.type === 'condition') {
-      if (data.left?.type === 'indicator') ids.push(data.left.indicatorId);
-      if (data.right?.type === 'indicator') ids.push(data.right.indicatorId);
-    }
-
-    return ids;
-  }
-
   async validateScanRule(logic: any, userId: number) {
     try {
       const parsed = scanRuleConfig.parse(logic);
 
-      const indicatorIds = [...new Set(this.extractIndicatorIds(parsed))];
+      const indicatorIds = [...new Set(extractIndicatorIds(parsed))];
 
       const indicator = await this.prisma.indicator.findMany({
         where: { id: { in: indicatorIds }, userId },
