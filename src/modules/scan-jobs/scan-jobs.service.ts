@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateScanJobDto } from './dto/create-scan-job.dto';
-import { UpdateScanJobDto } from './dto/update-scan-job.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ScanJob, Status } from '@prisma/client';
 
@@ -49,13 +48,5 @@ export class ScanJobsService {
     }
 
     return scanJob;
-  }
-
-  update(id: number, dto: UpdateScanJobDto) {
-    return `This action updates a #${id} scanJob`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} scanJob`;
   }
 }

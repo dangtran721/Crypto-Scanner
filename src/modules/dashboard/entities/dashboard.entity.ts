@@ -5,7 +5,7 @@ export class UserDashBoard {
 
   watchlists: any[];
   scanRules: any[];
-
+  scanJobs: any[];
   constructor(user: any) {
     this.id = user.id;
     this.email = user.email;
@@ -21,6 +21,16 @@ export class UserDashBoard {
     this.scanRules = user.scanRules.map((rule) => ({
       id: rule.id,
       logic: rule.logic,
+    }));
+
+    this.scanJobs = user.scanJobs.map((job) => ({
+      id: job.id,
+      status: job.status,
+      runs: job.scanRuns.map((run) => ({
+        id: run.id,
+        createdAt: run.createdAt,
+        results: run.results,
+      })),
     }));
   }
 }

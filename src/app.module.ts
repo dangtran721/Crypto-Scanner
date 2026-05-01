@@ -9,7 +9,6 @@ import { WatchlistsModule } from './modules/watchlists/watchlists.module';
 import { IndicatorModule } from './modules/indicator/indicator.module';
 import { ScanruleModule } from './modules/scanrule/scanrule.module';
 import { ScanJobsModule } from './modules/scan-jobs/scan-jobs.module';
-import { ScannerModule } from './modules/scanner/scanner.module';
 import { MarketDataModule } from './modules/market-data/market-data.module';
 import { DashBoardModule } from './modules/dashboard/dashboard.module';
 import { UserModule } from './modules/user/user.module';
@@ -25,7 +24,6 @@ import { UserModule } from './modules/user/user.module';
     IndicatorModule,
     ScanruleModule,
     ScanJobsModule,
-    ScannerModule,
     MarketDataModule,
     DashBoardModule,
   ],

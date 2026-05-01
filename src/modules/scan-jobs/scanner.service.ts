@@ -3,15 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { UpdateScannerDto } from './dto/update-scanner.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { extractIndicatorIds } from 'src/common/utils';
 import { MarketDataService } from '../market-data/market-data.service';
 import { Candle } from 'src/common/types';
 import { StrategiesMap } from '../indicator/strategies';
-import { Indicator } from '@prisma/client';
+import { Indicator, ScanResult, ScanRun, Status } from '@prisma/client';
 import { ScanResultItemType } from './types/scanner.type';
 import { IndicatorValue } from './types/indicator-value.type';
+import { ScanResultType } from './types/scan_result.type';
 
 @Injectable()
 export class ScannerService {
@@ -71,7 +71,7 @@ export class ScannerService {
     symbol: string,
     logic: any,
     indicatorMap: Map<number, Indicator>,
-  ) {
+  ): Promise<ScanResultItemType> {
     const candles = await this.marketData.getCandles(symbol);
 
     const left = await this.resolveOperand(logic.left, candles, indicatorMap);
@@ -105,37 +105,134 @@ export class ScannerService {
     };
   }
 
-  async runJob(scanJobId: number, userId: number) {
-    const job = await this.prisma.scanJob.findFirst({
-      where: { id: scanJobId, userId },
-      include: { watchlist: { include: { items: true } }, scanRule: true },
-    });
+  async evaluateJob(
+    job: any,
+    indicatorsMap: Map<number, Indicator>,
+    runId: number,
+  ): Promise<ScanResultType[]> {
+    const resultsData: ScanResultType[] = [];
 
-    if (!job) {
-      throw new NotFoundException('ScanJob not found');
-    }
-
-    const indicatorIds = extractIndicatorIds(job?.scanRule.logic);
-    const indicators = await this.prisma.indicator.findMany({
-      where: { id: { in: indicatorIds }, userId },
-    });
-
-    if (indicators.length !== indicatorIds.length) {
-      throw new BadRequestException('Invalid indicators');
-    }
-
-    const indicatorsMap = new Map(indicators.map((item) => [item.id, item]));
-
-    const results: ScanResultItemType[] = [];
     for (const item of job.watchlist.items) {
       const result = await this.evaluateSymbol(
         item.coinSymbol,
         job.scanRule.logic,
         indicatorsMap,
       );
-      results.push(result);
+
+      resultsData.push({
+        scanRunId: runId,
+        coinSymbol: item.coinSymbol,
+        result: result.result,
+        isValidSetup: result.isValidSetup,
+      });
     }
 
-    return results;
+    return resultsData;
+  }
+
+  async runJob(scanJobId: number, userId: number) {
+    const job = await this.prisma.scanJob.findFirst({
+      where: { id: scanJobId, userId },
+      include: {
+        watchlist: { include: { items: true } },
+        scanRule: true,
+        scanRuns: true,
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundException('ScanJob not found');
+    }
+
+    const run = await this.prisma.scanRun.create({
+      data: {
+        jobId: job.id,
+      },
+    });
+
+    await this.prisma.scanJob.update({
+      where: { id: job.id, userId },
+      data: {
+        status: Status.RUNNING,
+      },
+    });
+    try {
+      const indicatorIds = extractIndicatorIds(job.scanRule.logic);
+      const indicators = await this.prisma.indicator.findMany({
+        where: { id: { in: indicatorIds }, userId },
+      });
+
+      if (indicators.length !== indicatorIds.length) {
+        throw new BadRequestException('Invalid indicators');
+      }
+
+      const indicatorsMap = new Map(indicators.map((item) => [item.id, item]));
+
+      const resultsData = await this.evaluateJob(job, indicatorsMap, run.id);
+
+      await this.saveResults(job, userId, resultsData);
+
+      await this.clearOldRun(job.id);
+
+      return resultsData;
+    } catch (error) {
+      await this.prisma.scanJob.update({
+        where: { id: job.id, userId },
+        data: {
+          status: Status.FAILED,
+        },
+      });
+      throw error;
+    }
+  }
+
+  async saveResults(job: any, userId: number, resultsData: ScanResultType[]) {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.scanResult.createMany({ data: resultsData });
+
+      await tx.scanJob.update({
+        where: { id: job.id, userId },
+        data: {
+          status: Status.COMPLETED,
+        },
+      });
+    });
+  }
+
+  async clearOldRun(jobId: number) {
+    const runsToDelete = await this.prisma.scanRun.findMany({
+      where: { jobId },
+      orderBy: { createdAt: 'desc' },
+      skip: 5,
+      select: { id: true },
+    });
+
+    await this.prisma.scanRun.deleteMany({
+      where: {
+        id: {
+          in: runsToDelete.map((r) => r.id),
+        },
+      },
+    });
+  }
+  async findAllResultsById(jobId: number, userId: number): Promise<ScanRun[]> {
+    const job = await this.prisma.scanJob.findFirst({
+      where: { id: jobId, userId },
+      include: { scanRuns: true },
+    });
+
+    if (!job) {
+      throw new NotFoundException('ScanJob not found');
+    }
+
+    const runs = await this.prisma.scanRun.findMany({
+      where: { jobId: job.id },
+      include: {
+        results: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return runs;
   }
 }
