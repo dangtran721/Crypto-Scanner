@@ -9,7 +9,11 @@ export class DashBoardService {
   async getUserDashBoard(userId: number): Promise<UserDashBoard> {
     const dashBoard = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { watchlists: { include: { items: true } }, scanRules: true },
+      include: {
+        watchlists: { include: { items: true } },
+        scanRules: true,
+        scanJobs: { include: { scanRuns: { include: { results: true } } } },
+      },
     });
 
     if (!dashBoard) {
