@@ -1,11 +1,7 @@
-import { IndicatorValue } from './indicator-value.type';
+import { ScanEvaluationResult } from './scan-evaluation.type';
 
 export type ScanResultItemType = {
   coinSymbol: string;
-  result: {
-    left: IndicatorValue;
-    right: IndicatorValue;
-    operator: string;
-  };
+  result: ScanEvaluationResult;
   isValidSetup: boolean;
 };

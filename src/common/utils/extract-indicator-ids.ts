@@ -1,3 +1,5 @@
+import { ScanCondition } from 'src/modules/scanrule/types';
+
 export const extractIndicatorIds = (logic: any) => {
   const ids: number[] = [];
   if (logic.type === 'condition') {

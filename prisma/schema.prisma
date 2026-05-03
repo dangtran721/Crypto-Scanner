@@ -88,20 +88,20 @@ model ScanJob {
   user      User         @relation(fields: [userId], references: [id])
   scanRule  ScanRule     @relation(fields: [scanRuleId], references: [id])
   watchlist Watchlist    @relation(fields: [watchlistId], references: [id])
-scanRuns   ScanRun[]
+  scanRuns   ScanRun[]
 
   @@map("scan_jobs")
 }
 
 model ScanResult {
   id           Int      @id @default(autoincrement())
-  scanRunId        Int      @map("run_id")   
+  scanRunId    Int      @map("run_id")   
   coinSymbol   String   @map("coin_symbol")
   result       Json
   isValidSetup Boolean  @map("is_valid_setup")
   createdAt    DateTime @default(now()) @map("created_at")
   
- run ScanRun @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+  run ScanRun @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
 
 
   @@map("scan_results")
