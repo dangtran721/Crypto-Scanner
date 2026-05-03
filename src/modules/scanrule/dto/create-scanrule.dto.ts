@@ -1,7 +1,7 @@
-import { Prisma } from '@prisma/client';
-import { IsNotEmpty, IsNumber, IsObject } from 'class-validator';
+import { IsObject } from 'class-validator';
+import type { ScanCondition } from '../types';
 
 export class CreateScanruleDto {
   @IsObject()
-  logic: any;
+  logic: ScanCondition;
 }

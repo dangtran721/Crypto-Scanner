@@ -9,12 +9,13 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ScanRule } from '@prisma/client';
 import { scanRuleConfig } from './config/scanrule-config';
 import { extractIndicatorIds } from 'src/common/utils';
+import { ScanCondition } from './types';
 
 @Injectable()
 export class ScanruleService {
   constructor(private prisma: PrismaService) {}
 
-  async validateScanRule(logic: any, userId: number) {
+  async validateScanRule(logic: ScanCondition, userId: number) {
     try {
       const parsed = scanRuleConfig.parse(logic);
 
@@ -64,7 +65,7 @@ export class ScanruleService {
   ): Promise<ScanRule> {
     const existing = await this.findOne(id, userId);
 
-    const logic = dto.logic ?? existing.logic;
+    const logic: ScanCondition = (dto.logic as ScanCondition) ?? existing.logic;
 
     await this.validateScanRule(logic, userId);
 

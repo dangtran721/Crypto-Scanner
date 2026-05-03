@@ -8,10 +8,14 @@ import { extractIndicatorIds } from 'src/common/utils';
 import { MarketDataService } from '../market-data/market-data.service';
 import { Candle } from 'src/common/types';
 import { StrategiesMap } from '../indicator/strategies';
-import { Indicator, ScanResult, ScanRun, Status } from '@prisma/client';
-import { ScanResultItemType } from './types/scanner.type';
-import { IndicatorValue } from './types/indicator-value.type';
-import { ScanResultType } from './types/scan_result.type';
+import { Indicator, Prisma, ScanRun, Status } from '@prisma/client';
+import { ScanCondition, ScanOperand } from '../scanrule/types';
+import {
+  IndicatorValue,
+  ScanJobWithData,
+  ScanResultItemType,
+  ScanResultType,
+} from './types';
 
 @Injectable()
 export class ScannerService {
@@ -22,7 +26,7 @@ export class ScannerService {
   ) {}
 
   async resolveOperand(
-    operand: any,
+    operand: ScanOperand,
     candles: Candle[],
     indicatorMap: Map<number, Indicator>,
   ): Promise<IndicatorValue> {
@@ -69,7 +73,7 @@ export class ScannerService {
 
   async evaluateSymbol(
     symbol: string,
-    logic: any,
+    logic: ScanCondition,
     indicatorMap: Map<number, Indicator>,
   ): Promise<ScanResultItemType> {
     const candles = await this.marketData.getCandles(symbol);
@@ -106,11 +110,10 @@ export class ScannerService {
   }
 
   async evaluateJob(
-    job: any,
+    job: ScanJobWithData,
     indicatorsMap: Map<number, Indicator>,
-    runId: number,
-  ): Promise<ScanResultType[]> {
-    const resultsData: ScanResultType[] = [];
+  ): Promise<Omit<ScanResultType, 'scanRunId'>[]> {
+    const results: Omit<ScanResultType, 'scanRunId'>[] = [];
 
     for (const item of job.watchlist.items) {
       const result = await this.evaluateSymbol(
@@ -119,15 +122,14 @@ export class ScannerService {
         indicatorsMap,
       );
 
-      resultsData.push({
-        scanRunId: runId,
+      results.push({
         coinSymbol: item.coinSymbol,
         result: result.result,
         isValidSetup: result.isValidSetup,
       });
     }
 
-    return resultsData;
+    return results;
   }
 
   async runJob(scanJobId: number, userId: number) {
@@ -136,7 +138,6 @@ export class ScannerService {
       include: {
         watchlist: { include: { items: true } },
         scanRule: true,
-        scanRuns: true,
       },
     });
 
@@ -144,11 +145,16 @@ export class ScannerService {
       throw new NotFoundException('ScanJob not found');
     }
 
-    const run = await this.prisma.scanRun.create({
-      data: {
-        jobId: job.id,
-      },
+    const indicatorIds = extractIndicatorIds(job.scanRule.logic);
+    const indicators = await this.prisma.indicator.findMany({
+      where: { id: { in: indicatorIds }, userId },
     });
+
+    if (indicators.length !== indicatorIds.length) {
+      throw new BadRequestException('Invalid indicators');
+    }
+
+    const indicatorsMap = new Map(indicators.map((item) => [item.id, item]));
 
     await this.prisma.scanJob.update({
       where: { id: job.id, userId },
@@ -156,25 +162,25 @@ export class ScannerService {
         status: Status.RUNNING,
       },
     });
+
+    const rawResults = await this.evaluateJob(job, indicatorsMap);
+
     try {
-      const indicatorIds = extractIndicatorIds(job.scanRule.logic);
-      const indicators = await this.prisma.indicator.findMany({
-        where: { id: { in: indicatorIds }, userId },
+      await this.prisma.$transaction(async (tx) => {
+        const run = await tx.scanRun.create({
+          data: {
+            jobId: job.id,
+          },
+        });
+
+        const resultsWithRunId = rawResults.map((r) => ({
+          ...r,
+          scanRunId: run.id,
+        }));
+
+        await this.saveResults(tx, job, userId, resultsWithRunId);
+        await this.clearOldRun(tx, job.id);
       });
-
-      if (indicators.length !== indicatorIds.length) {
-        throw new BadRequestException('Invalid indicators');
-      }
-
-      const indicatorsMap = new Map(indicators.map((item) => [item.id, item]));
-
-      const resultsData = await this.evaluateJob(job, indicatorsMap, run.id);
-
-      await this.saveResults(job, userId, resultsData);
-
-      await this.clearOldRun(job.id);
-
-      return resultsData;
     } catch (error) {
       await this.prisma.scanJob.update({
         where: { id: job.id, userId },
@@ -186,28 +192,31 @@ export class ScannerService {
     }
   }
 
-  async saveResults(job: any, userId: number, resultsData: ScanResultType[]) {
-    await this.prisma.$transaction(async (tx) => {
-      await tx.scanResult.createMany({ data: resultsData });
+  async saveResults(
+    tx: Prisma.TransactionClient,
+    job: ScanJobWithData,
+    userId: number,
+    resultsData: ScanResultType[],
+  ) {
+    await tx.scanResult.createMany({ data: { ...resultsData } });
 
-      await tx.scanJob.update({
-        where: { id: job.id, userId },
-        data: {
-          status: Status.COMPLETED,
-        },
-      });
+    await tx.scanJob.update({
+      where: { id: job.id, userId },
+      data: {
+        status: Status.COMPLETED,
+      },
     });
   }
 
-  async clearOldRun(jobId: number) {
-    const runsToDelete = await this.prisma.scanRun.findMany({
+  async clearOldRun(tx: Prisma.TransactionClient, jobId: number) {
+    const runsToDelete = await tx.scanRun.findMany({
       where: { jobId },
       orderBy: { createdAt: 'desc' },
       skip: 5,
       select: { id: true },
     });
 
-    await this.prisma.scanRun.deleteMany({
+    await tx.scanRun.deleteMany({
       where: {
         id: {
           in: runsToDelete.map((r) => r.id),
