@@ -145,7 +145,9 @@ export class ScannerService {
       throw new NotFoundException('ScanJob not found');
     }
 
-    const indicatorIds = extractIndicatorIds(job.scanRule.logic);
+    const indicatorIds = extractIndicatorIds(
+      job.scanRule.logic as ScanCondition,
+    );
     const indicators = await this.prisma.indicator.findMany({
       where: { id: { in: indicatorIds }, userId },
     });
@@ -180,6 +182,8 @@ export class ScannerService {
 
         await this.saveResults(tx, job, userId, resultsWithRunId);
         await this.clearOldRun(tx, job.id);
+
+        return resultsWithRunId;
       });
     } catch (error) {
       await this.prisma.scanJob.update({
@@ -198,7 +202,7 @@ export class ScannerService {
     userId: number,
     resultsData: ScanResultType[],
   ) {
-    await tx.scanResult.createMany({ data: { ...resultsData } });
+    await tx.scanResult.createMany({ data: resultsData });
 
     await tx.scanJob.update({
       where: { id: job.id, userId },

@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserDashBoard } from './entities/dashboard.entity';
+import { UserDashBoardDto } from './dto/dashboard.dto';
+import { toUserDashboardDto } from './mapper/user-dashboard.mapper';
 
 @Injectable()
 export class DashBoardService {
   constructor(private prisma: PrismaService) {}
 
-  async getUserDashBoard(userId: number): Promise<UserDashBoard> {
+  async getUserDashBoard(userId: number): Promise<UserDashBoardDto> {
     const dashBoard = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -20,6 +21,6 @@ export class DashBoardService {
       throw new NotFoundException('User not found');
     }
 
-    return new UserDashBoard(dashBoard);
+    return toUserDashboardDto(dashBoard);
   }
 }
