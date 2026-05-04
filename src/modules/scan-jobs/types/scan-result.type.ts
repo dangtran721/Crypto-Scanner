@@ -1,6 +1,8 @@
-export class ScanResultType {
+import { ScanEvaluationResult } from './scan-evaluation.type';
+
+export type ScanResultType = {
   scanRunId: number;
   coinSymbol: string;
-  result: any;
+  result: ScanEvaluationResult;
   isValidSetup: boolean;
-}
+};
