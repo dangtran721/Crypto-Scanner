@@ -1,34 +1,23 @@
-import { Injectable } from '@nestjs/common';
-import { CreateMarketDatumDto } from './dto/create-market-datum.dto';
-import { UpdateMarketDatumDto } from './dto/update-market-datum.dto';
-import { MockProvider } from './provider/mock.provider';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Candle } from 'src/common/types';
+import { MarketDataProviderMap } from './provider/provider-map';
+import { MarketDataType } from './types/provider.type';
+import { TimeFramesType } from '../scanrule/types';
 
 @Injectable()
 export class MarketDataService {
-  constructor(private provider: MockProvider) {}
+  constructor(private providerMap: MarketDataProviderMap) {}
 
-  getCandles(symbol: string): Promise<Candle[]> {
-    return this.provider.getCandles(symbol);
-  }
+  getCandles(
+    type: MarketDataType,
+    symbol: string,
+    timeFrames: TimeFramesType,
+  ): Promise<Candle[]> {
+    const provider = this.providerMap.getType(type);
 
-  create(createMarketDatumDto: CreateMarketDatumDto) {
-    return 'This action adds a new marketDatum';
-  }
-
-  findAll() {
-    return `This action returns all marketData`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} marketDatum`;
-  }
-
-  update(id: number, updateMarketDatumDto: UpdateMarketDatumDto) {
-    return `This action updates a #${id} marketDatum`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} marketDatum`;
+    if (!provider) {
+      throw new BadRequestException(`Invalid provider: ${type}`);
+    }
+    return provider.getCandles(symbol, timeFrames);
   }
 }

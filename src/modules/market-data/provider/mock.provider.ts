@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Candle } from 'src/common/types';
+import { IMarketDataProvider } from '../market-data.interface';
+import { TimeFramesType } from 'src/modules/scanrule/types';
 
 @Injectable()
-export class MockProvider {
-  async getCandles(symbol: string): Promise<Candle[]> {
+export class MockProvider implements IMarketDataProvider {
+  async getCandles(
+    symbol: string,
+    timeFrames: TimeFramesType,
+  ): Promise<Candle[]> {
     return Array.from({ length: 100 }).map((_, i) => ({
       time: Date.now() - (100 - i) * 60000,
       open: 100 + i,

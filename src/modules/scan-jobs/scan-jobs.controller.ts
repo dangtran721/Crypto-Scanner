@@ -4,6 +4,7 @@ import { CreateScanJobDto } from './dto/create-scan-job.dto';
 import { GetUser } from 'src/common/decorators';
 import { AuthJwtGuard } from '../auth/guards';
 import { ScannerService } from './scanner.service';
+import type { MarketDataType } from '../market-data/types/provider.type';
 
 @UseGuards(AuthJwtGuard)
 @Controller('scan-jobs')
@@ -30,8 +31,12 @@ export class ScanJobsController {
 
   //Scanner:
   @Post(':id/run')
-  runJob(@Param('id') scanJobId: string, @GetUser('id') userId: number) {
-    return this.scannerService.runJob(+scanJobId, userId);
+  runJob(
+    @Param('id') scanJobId: string,
+    @Body() body: { type: MarketDataType },
+    @GetUser('id') userId: number,
+  ) {
+    return this.scannerService.runJob(body.type, +scanJobId, userId);
   }
 
   @Get(':id/results')
