@@ -17,5 +17,6 @@ import {
     RsiStrategy,
     IchimokuStrategy,
   ],
+  exports: [StrategiesMap],
 })
 export class IndicatorModule {}

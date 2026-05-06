@@ -1,23 +1,18 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ScanJobsService } from './scan-jobs.service';
 import { CreateScanJobDto } from './dto/create-scan-job.dto';
-import { UpdateScanJobDto } from './dto/update-scan-job.dto';
 import { GetUser } from 'src/common/decorators';
 import { AuthJwtGuard } from '../auth/guards';
+import { ScannerService } from './scanner.service';
+import type { MarketDataType } from '../market-data/types/provider.type';
 
 @UseGuards(AuthJwtGuard)
 @Controller('scan-jobs')
 export class ScanJobsController {
-  constructor(private readonly scanJobsService: ScanJobsService) {}
+  constructor(
+    private readonly scanJobsService: ScanJobsService,
+    private readonly scannerService: ScannerService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateScanJobDto, @GetUser('id') userId: number) {
@@ -34,13 +29,18 @@ export class ScanJobsController {
     return this.scanJobsService.findOne(+id, userId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateScanJobDto) {
-    return this.scanJobsService.update(+id, dto);
+  //Scanner:
+  @Post(':id/run')
+  runJob(
+    @Param('id') scanJobId: string,
+    @Body() body: { type: MarketDataType },
+    @GetUser('id') userId: number,
+  ) {
+    return this.scannerService.runJob(body.type, +scanJobId, userId);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.scanJobsService.remove(+id);
+  @Get(':id/results')
+  findResult(@Param('id') id: string, @GetUser('id') userId: number) {
+    return this.scannerService.findAllResultsById(+id, userId);
   }
 }

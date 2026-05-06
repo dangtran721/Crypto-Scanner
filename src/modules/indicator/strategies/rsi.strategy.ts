@@ -2,7 +2,7 @@ import { RSI } from 'technicalindicators';
 import { IIndicatorStrategy } from './interface.strategy';
 import { IndicatorConfigMap } from '../types/indicator-config.type';
 import { IndicatorType } from '@prisma/client';
-import { Candle } from '../types/candle.type';
+import { Candle } from 'src/common/types';
 
 type RsiConfig = IndicatorConfigMap['RSI'];
 

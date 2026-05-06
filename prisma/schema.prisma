@@ -88,22 +88,34 @@ model ScanJob {
   user      User         @relation(fields: [userId], references: [id])
   scanRule  ScanRule     @relation(fields: [scanRuleId], references: [id])
   watchlist Watchlist    @relation(fields: [watchlistId], references: [id])
-  results   ScanResult[]
+  scanRuns   ScanRun[]
 
   @@map("scan_jobs")
 }
 
 model ScanResult {
   id           Int      @id @default(autoincrement())
-  jobId        Int      @map("job_id")
+  scanRunId    Int      @map("run_id")   
   coinSymbol   String   @map("coin_symbol")
   result       Json
   isValidSetup Boolean  @map("is_valid_setup")
   createdAt    DateTime @default(now()) @map("created_at")
   
-  job       ScanJob  @relation(fields: [jobId], references: [id])
+  run ScanRun @relation(fields: [scanRunId], references: [id], onDelete: Cascade)
+
 
   @@map("scan_results")
+}
+
+model ScanRun {
+  id        Int      @id @default(autoincrement())
+  jobId     Int      @map("job_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  job     ScanJob     @relation(fields: [jobId], references: [id])
+  results ScanResult[]
+
+  @@map("scan_runs")
 }
 
 model Alert {

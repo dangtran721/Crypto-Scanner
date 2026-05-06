@@ -36,7 +36,6 @@ export class AuthService {
     }
 
     const tokens = await this.tokenService.generateAuthTokens(user);
-    //  console.log(tokens.refresh);
 
     return {
       user: new Users(user),
