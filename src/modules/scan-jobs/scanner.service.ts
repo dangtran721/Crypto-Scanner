@@ -16,6 +16,7 @@ import {
   ScanResultItemType,
   ScanResultType,
 } from './types';
+import { MarketDataType } from '../market-data/types/provider.type';
 
 @Injectable()
 export class ScannerService {
@@ -72,11 +73,16 @@ export class ScannerService {
   }
 
   async evaluateSymbol(
+    type: MarketDataType,
     symbol: string,
     logic: ScanCondition,
     indicatorMap: Map<number, Indicator>,
   ): Promise<ScanResultItemType> {
-    const candles = await this.marketData.getCandles(symbol);
+    const candles = await this.marketData.getCandles(
+      type,
+      symbol,
+      logic.timeFrames,
+    );
 
     const left = await this.resolveOperand(logic.left, candles, indicatorMap);
     const right = await this.resolveOperand(logic.right, candles, indicatorMap);
@@ -99,6 +105,7 @@ export class ScannerService {
     const isValid = operatorFn(left, right);
 
     return {
+      type,
       coinSymbol: symbol,
       result: {
         left,
@@ -110,6 +117,7 @@ export class ScannerService {
   }
 
   async evaluateJob(
+    type: MarketDataType,
     job: ScanJobWithData,
     indicatorsMap: Map<number, Indicator>,
   ): Promise<Omit<ScanResultType, 'scanRunId'>[]> {
@@ -117,6 +125,7 @@ export class ScannerService {
 
     for (const item of job.watchlist.items) {
       const result = await this.evaluateSymbol(
+        type,
         item.coinSymbol,
         job.scanRule.logic,
         indicatorsMap,
@@ -132,7 +141,11 @@ export class ScannerService {
     return results;
   }
 
-  async runJob(scanJobId: number, userId: number) {
+  async runJob(
+    type: MarketDataType,
+    scanJobId: number,
+    userId: number,
+  ): Promise<ScanResultType[]> {
     const job = await this.prisma.scanJob.findFirst({
       where: { id: scanJobId, userId },
       include: {
@@ -165,10 +178,10 @@ export class ScannerService {
       },
     });
 
-    const rawResults = await this.evaluateJob(job, indicatorsMap);
+    const rawResults = await this.evaluateJob(type, job, indicatorsMap);
 
     try {
-      await this.prisma.$transaction(async (tx) => {
+      const results = await this.prisma.$transaction(async (tx) => {
         const run = await tx.scanRun.create({
           data: {
             jobId: job.id,
@@ -185,6 +198,7 @@ export class ScannerService {
 
         return resultsWithRunId;
       });
+      return results;
     } catch (error) {
       await this.prisma.scanJob.update({
         where: { id: job.id, userId },
@@ -201,7 +215,7 @@ export class ScannerService {
     job: ScanJobWithData,
     userId: number,
     resultsData: ScanResultType[],
-  ) {
+  ): Promise<void> {
     await tx.scanResult.createMany({ data: resultsData });
 
     await tx.scanJob.update({
@@ -212,7 +226,10 @@ export class ScannerService {
     });
   }
 
-  async clearOldRun(tx: Prisma.TransactionClient, jobId: number) {
+  async clearOldRun(
+    tx: Prisma.TransactionClient,
+    jobId: number,
+  ): Promise<void> {
     const runsToDelete = await tx.scanRun.findMany({
       where: { jobId },
       orderBy: { createdAt: 'desc' },

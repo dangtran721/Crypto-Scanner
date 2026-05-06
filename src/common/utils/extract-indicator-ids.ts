@@ -1,6 +1,8 @@
 import { ScanCondition } from 'src/modules/scanrule/types';
 
-export const extractIndicatorIds = (logic: ScanCondition) => {
+export const extractIndicatorIds = (
+  logic: Omit<ScanCondition, 'timeFrames'>,
+) => {
   const ids: number[] = [];
   if (logic.type === 'condition') {
     if (logic.left?.type === 'indicator') ids.push(logic.left.indicatorId);
