@@ -5,6 +5,8 @@ import { MockProvider } from './provider/mock.provider';
 import { IMarketDataProvider } from './market-data.interface';
 import { BinanceProvider } from './provider/binance.provider';
 import { MarketDataProviderMap } from './provider/provider-map';
+import { RedisService } from '../redis/redis.service';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   controllers: [MarketDataController],
@@ -14,6 +16,7 @@ import { MarketDataProviderMap } from './provider/provider-map';
     BinanceProvider,
     MarketDataProviderMap,
   ],
+  imports: [RedisModule],
   exports: [MarketDataService],
 })
 export class MarketDataModule {}

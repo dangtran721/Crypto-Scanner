@@ -20,7 +20,6 @@ export class ScanJobsService {
         }),
       ]);
 
-
       if (!watchlist) {
         throw new NotFoundException('Watchlist not found');
       }
