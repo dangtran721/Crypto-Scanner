@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Candle } from 'src/common/types';
 import { IMarketDataProvider } from '../market-data.interface';
 import { TimeFramesType } from 'src/modules/scanrule/types';
+import { MarketDataType } from '../types/provider.type';
 
 @Injectable()
 export class MockProvider implements IMarketDataProvider {
   async getCandles(
+    type: MarketDataType,
     symbol: string,
     timeFrames: TimeFramesType,
   ): Promise<Candle[]> {
