@@ -3,12 +3,16 @@ import { Candle } from 'src/common/types';
 import { MarketDataProviderMap } from './provider/provider-map';
 import { MarketDataType } from './types/provider.type';
 import { TimeFramesType } from '../scanrule/types';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class MarketDataService {
-  constructor(private providerMap: MarketDataProviderMap) {}
+  constructor(
+    private providerMap: MarketDataProviderMap,
+    private readonly redis: RedisService,
+  ) {}
 
-  getCandles(
+  async getCandles(
     type: MarketDataType,
     symbol: string,
     timeFrames: TimeFramesType,
@@ -18,6 +22,23 @@ export class MarketDataService {
     if (!provider) {
       throw new BadRequestException(`Invalid provider: ${type}`);
     }
-    return provider.getCandles(symbol, timeFrames);
+    const key = `candles:${type}:${symbol}:${timeFrames}`;
+
+    const cached = await this.redis.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    const ttlMap: Record<TimeFramesType, number> = {
+      '1h': 600,
+      '4h': 1800,
+      '1d': 3600,
+    };
+
+    const candles = await provider.getCandles(type, symbol, timeFrames);
+
+    await this.redis.set(key, candles, ttlMap[timeFrames]);
+
+    return candles;
   }
 }

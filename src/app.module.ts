@@ -12,6 +12,7 @@ import { ScanJobsModule } from './modules/scan-jobs/scan-jobs.module';
 import { MarketDataModule } from './modules/market-data/market-data.module';
 import { DashBoardModule } from './modules/dashboard/dashboard.module';
 import { UserModule } from './modules/user/user.module';
+import { RedisModule } from './modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UserModule } from './modules/user/user.module';
     ScanJobsModule,
     MarketDataModule,
     DashBoardModule,
+    RedisModule,
   ],
 })
 export class AppModule {}
