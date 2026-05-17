@@ -14,7 +14,9 @@ import { RefreshToken } from '../token/dto/refresh-token.dto';
 import { AuthResponseDto } from './dto/auth-response.entity';
 import { AuthJwtGuard } from './guards';
 import { GetUser, Public } from 'src/common/decorators';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+@ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}

@@ -5,8 +5,10 @@ import { GetUser } from 'src/common/decorators';
 import { AuthJwtGuard } from '../auth/guards';
 import { ScannerService } from './scanner.service';
 import { RunScanJobDto } from './dto/run-scan-job.dto';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
+@ApiBearerAuth()
 @Controller('scan-jobs')
 export class ScanJobsController {
   constructor(
@@ -31,6 +33,11 @@ export class ScanJobsController {
 
   //Scanner:
   @Post(':id/run')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
   runJob(
     @Param('id') scanJobId: string,
     @Body() body: RunScanJobDto,
@@ -40,6 +47,11 @@ export class ScanJobsController {
   }
 
   @Get(':id/results')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
   findResult(@Param('id') id: string, @GetUser('id') userId: number) {
     return this.scannerService.findAllResultsById(+id, userId);
   }

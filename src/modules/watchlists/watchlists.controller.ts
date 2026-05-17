@@ -17,8 +17,10 @@ import { Watchlist, WatchlistItem } from '@prisma/client';
 import { AuthJwtGuard } from '../auth/guards';
 import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 import { AddWatchlistItemDto } from './dto/add-watchlist-item.dto';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
+@ApiBearerAuth()
 @Controller('watchlists')
 export class WatchlistsController {
   constructor(private readonly watchlistsService: WatchlistsService) {}

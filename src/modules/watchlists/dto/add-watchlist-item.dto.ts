@@ -1,6 +1,8 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class AddWatchlistItemDto {
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   @Matches(/^[A-Z0-9]+$/, {
