@@ -13,8 +13,10 @@ import { CreateScanruleDto } from './dto/create-scanrule.dto';
 import { UpdateScanruleDto } from './dto/update-scanrule.dto';
 import { GetUser } from 'src/common/decorators';
 import { AuthJwtGuard } from '../auth/guards';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
+@ApiBearerAuth()
 @Controller('scan-rules')
 export class ScanruleController {
   constructor(private readonly scanruleService: ScanruleService) {}

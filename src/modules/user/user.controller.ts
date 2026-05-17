@@ -16,8 +16,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Role, User } from '@prisma/client';
 import { GetUser, Public, Roles } from 'src/common/decorators';
 import { AuthJwtGuard, RolesGuard } from '../auth/guards';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard, RolesGuard)
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}

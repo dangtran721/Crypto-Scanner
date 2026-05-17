@@ -16,8 +16,10 @@ import { UpdateIndicatorDto } from './dto/update-indicator.dto';
 import { AuthJwtGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
 import { Indicator } from '@prisma/client';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
+@ApiBearerAuth()
 @Controller('indicator')
 export class IndicatorController {
   constructor(private readonly indicatorService: IndicatorService) {}
