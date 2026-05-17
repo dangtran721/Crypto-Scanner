@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { IMarketDataProvider } from '../market-data.interface';
 import { MockProvider } from './mock.provider';
 import { BinanceProvider } from './binance.provider';
-import { MarketDataType } from '../types/provider.type';
+import { MarketDataType } from '../types';
 
 @Injectable()
 export class MarketDataProviderMap {

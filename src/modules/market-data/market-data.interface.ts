@@ -1,6 +1,6 @@
 import { Candle } from 'src/common/types';
 import { TimeFramesType } from '../scanrule/types';
-import { MarketDataType } from './types/provider.type';
+import { MarketDataType } from './types';
 
 export interface IMarketDataProvider {
   getCandles(

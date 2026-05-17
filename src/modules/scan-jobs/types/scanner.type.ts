@@ -1,4 +1,4 @@
-import { MarketDataType } from 'src/modules/market-data/types/provider.type';
+import { MarketDataType } from 'src/modules/market-data/types';
 import { ScanEvaluationResult } from './scan-evaluation.type';
 
 export type ScanResultItemType = {
