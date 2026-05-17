@@ -16,7 +16,7 @@ import {
   ScanResultItemType,
   ScanResultType,
 } from './types';
-import { MarketDataType } from '../market-data/types/provider.type';
+import { MarketDataType } from '../market-data/types';
 
 @Injectable()
 export class ScannerService {

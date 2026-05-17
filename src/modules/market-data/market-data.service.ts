@@ -1,9 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Candle } from 'src/common/types';
 import { MarketDataProviderMap } from './provider/provider-map';
-import { MarketDataType } from './types/provider.type';
+
 import { TimeFramesType } from '../scanrule/types';
 import { RedisService } from '../redis/redis.service';
+import { MarketDataType } from './types';
 
 @Injectable()
 export class MarketDataService {
