@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Candle } from 'src/common/types';
 import { IMarketDataProvider } from '../market-data.interface';
 import { TimeFramesType } from 'src/modules/scanrule/types';
-import { MarketDataType } from '../types/provider.type';
+import { MarketDataType } from '../types';
 
 @Injectable()
 export class MockProvider implements IMarketDataProvider {

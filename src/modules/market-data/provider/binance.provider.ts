@@ -3,8 +3,7 @@ import { IMarketDataProvider } from '../market-data.interface';
 import { Candle } from 'src/common/types';
 import { normalizeSymbol } from '../utils/normalize-symbol';
 import { TimeFramesType } from 'src/modules/scanrule/types';
-import { MarketDataType } from '../types/provider.type';
-import { RedisService } from 'src/modules/redis/redis.service';
+import { BinanceKline, MarketDataType } from '../types';
 
 @Injectable()
 export class BinanceProvider implements IMarketDataProvider {
@@ -25,16 +24,46 @@ export class BinanceProvider implements IMarketDataProvider {
       );
     }
 
-    const raw = await response.json();
+    const raw: unknown = await response.json();
+    if (!Array.isArray(raw)) {
+      throw new BadGatewayException('Binance response is not a kline array');
+    }
 
-    const candles = raw.map((k: any) => ({
-      time: Number(k[0]),
-      open: Number(k[1]),
-      high: Number(k[2]),
-      low: Number(k[3]),
-      close: Number(k[4]),
-      volume: Number(k[5]),
-    }));
-    return candles;
+    return raw.map((kline, index) => this.toCandle(kline, index));
+  }
+
+  private toCandle(kline: unknown, index: number): Candle {
+    if (!Array.isArray(kline) || kline.length < 6) {
+      throw new BadGatewayException(
+        `Binance kline at index ${index} is malformed`,
+      );
+    }
+
+    const [time, open, high, low, close, volume] = kline as BinanceKline;
+
+    return {
+      time: this.toNumber(time, 'time', index),
+      open: this.toNumber(open, 'open', index),
+      high: this.toNumber(high, 'high', index),
+      low: this.toNumber(low, 'low', index),
+      close: this.toNumber(close, 'close', index),
+      volume: this.toNumber(volume, 'volume', index),
+    };
+  }
+
+  private toNumber(
+    value: number | string,
+    field: string,
+    index: number,
+  ): number {
+    const parsed = Number(value);
+
+    if (Number.isNaN(parsed)) {
+      throw new BadGatewayException(
+        `Binance kline ${field} at index ${index} is not numeric`,
+      );
+    }
+
+    return parsed;
   }
 }
