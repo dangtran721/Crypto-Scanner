@@ -4,7 +4,7 @@ const envSchema = z.object({
   PORT: z.string().transform(Number).default('3000'),
   REDIS_PORT: z.string().transform(Number).default('6379'),
   REDIS_HOST: z.string().default('localhost'),
-  REDIS_PASSWORD: z.string(),
+  REDIS_PASSWORD: z.string().optional().default(''),
 });
 export default registerAs('app', () => {
   const result = envSchema.safeParse(process.env);
