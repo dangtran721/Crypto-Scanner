@@ -15,6 +15,8 @@ export class RedisService {
       port: this.configService.getOrThrow('app.redisPort', {
         infer: true,
       }),
+
+      password: this.configService.get('app.redisPassword', { infer: true }),
     });
   }
 
