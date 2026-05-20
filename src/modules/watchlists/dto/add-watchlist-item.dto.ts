@@ -1,12 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class AddWatchlistItemDto {
-  @ApiProperty()
+  @ApiProperty({ example: 'btc' })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[A-Z0-9]+$/, {
-    message: 'coinSymbol must be uppercase alphanumeric (e.g., BTCUSDT)',
-  })
   coinSymbol: string;
 }

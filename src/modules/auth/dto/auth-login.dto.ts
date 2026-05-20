@@ -3,7 +3,7 @@ import { IsEmail, IsNotEmpty } from 'class-validator';
 
 export class AuthLoginDto {
   @ApiProperty({
-    example: 'testuser3@gmail.com',
+    example: 'testuser@gmail.com',
   })
   @IsNotEmpty()
   @IsEmail()

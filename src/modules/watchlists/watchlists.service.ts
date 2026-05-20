@@ -10,6 +10,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { AddWatchlistItemDto } from './dto/add-watchlist-item.dto';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client.js';
 import { WatchlistResponseType } from './types/watchlist-response.type';
+import { AddManyWatchlistItemsDto } from './dto/add-many-watchlist-items.dto';
 
 @Injectable()
 export class WatchlistsService {
@@ -96,6 +97,35 @@ export class WatchlistsService {
       }
       throw error;
     }
+  }
+
+  async addManyItems(
+    watchlistId: number,
+    dto: AddManyWatchlistItemsDto,
+    userId: number,
+  ): Promise<WatchlistItem[]> {
+    await this.findOne(watchlistId, userId);
+
+    const normalizedSymbols = dto.coinSymbol.map((symbol) =>
+      symbol.toUpperCase(),
+    );
+
+    await this.prisma.watchlistItem.createMany({
+      data: normalizedSymbols.map((symbol) => ({
+        watchlistId,
+        coinSymbol: symbol,
+      })),
+      skipDuplicates: true,
+    });
+
+    return this.prisma.watchlistItem.findMany({
+      where: {
+        watchlistId,
+        coinSymbol: {
+          in: normalizedSymbols,
+        },
+      },
+    });
   }
 
   async removeItem(watchlistId: number, userId: number, itemId: number) {

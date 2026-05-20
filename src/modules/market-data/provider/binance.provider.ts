@@ -3,12 +3,11 @@ import { IMarketDataProvider } from '../market-data.interface';
 import { Candle } from 'src/common/types';
 import { normalizeSymbol } from '../utils/normalize-symbol';
 import { TimeFramesType } from 'src/modules/scanrule/types';
-import { BinanceKline, MarketDataType } from '../types';
+import { BinanceKline } from '../types';
 
 @Injectable()
 export class BinanceProvider implements IMarketDataProvider {
   async getCandles(
-    type: MarketDataType,
     symbol: string,
     timeFrames: TimeFramesType,
   ): Promise<Candle[]> {
