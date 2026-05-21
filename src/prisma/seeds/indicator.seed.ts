@@ -16,13 +16,15 @@ export async function seedIndicators(prisma: PrismaClient) {
       {
         userId: user.id,
         type: IndicatorType.EMA,
-        config: 89,
+        config: {
+          period: 89,
+        },
       },
       {
         userId: user.id,
         type: IndicatorType.EMA,
         config: {
-          length: 34,
+          period: 34,
         },
       },
     ],

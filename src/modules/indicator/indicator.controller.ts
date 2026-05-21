@@ -16,7 +16,7 @@ import { UpdateIndicatorDto } from './dto/update-indicator.dto';
 import { AuthJwtGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
 import { Indicator } from '@prisma/client';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
 @ApiBearerAuth()
@@ -42,6 +42,11 @@ export class IndicatorController {
   }
 
   @Get(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
   @ApiOperation({ summary: 'Find one my Indicator ' })
   @HttpCode(HttpStatus.OK)
   findOne(
@@ -52,6 +57,11 @@ export class IndicatorController {
   }
 
   @Patch(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
   @ApiOperation({ summary: 'Modify Indicator ' })
   @HttpCode(HttpStatus.OK)
   update(

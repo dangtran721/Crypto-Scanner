@@ -17,7 +17,7 @@ import { Watchlist, WatchlistItem } from '@prisma/client';
 import { AuthJwtGuard } from '../auth/guards';
 import { UpdateWatchlistDto } from './dto/update-watchlist.dto';
 import { AddWatchlistItemDto } from './dto/add-watchlist-item.dto';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { AddManyWatchlistItemsDto } from './dto/add-many-watchlist-items.dto';
 
 @UseGuards(AuthJwtGuard)
@@ -43,6 +43,11 @@ export class WatchlistsController {
   }
 
   @Get(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
   @ApiOperation({ summary: 'Find one Watchlist' })
   @HttpCode(HttpStatus.OK)
   findOne(
@@ -53,6 +58,11 @@ export class WatchlistsController {
   }
 
   @Patch(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
   @ApiOperation({ summary: 'Modify my Watchlist' })
   @HttpCode(HttpStatus.OK)
   update(

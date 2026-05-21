@@ -14,8 +14,8 @@ async function main() {
   await seedAdmin(prisma);
   await seedWatchlists(prisma);
   await seedWatchlistItems(prisma);
-  await seedScanRules(prisma);
   await seedIndicators(prisma);
+  await seedScanRules(prisma);
 }
 
 main()

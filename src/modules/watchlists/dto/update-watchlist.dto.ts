@@ -4,7 +4,7 @@ import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateWatchlistDto extends PartialType(CreateWatchlistDto) {
-  @ApiProperty()
+  @ApiProperty({ example: `Top Coins - ${Math.floor(Math.random() * 1000)}` })
   @IsString()
   name?: string;
 }

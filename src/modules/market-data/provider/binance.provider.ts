@@ -3,20 +3,22 @@ import { IMarketDataProvider } from '../market-data.interface';
 import { Candle } from 'src/common/types';
 import { normalizeSymbol } from '../utils/normalize-symbol';
 import { TimeFramesType } from 'src/modules/scanrule/types';
-import { BinanceKline } from '../types';
+import { BinanceKline, MarketDataType } from '../types';
 
 @Injectable()
 export class BinanceProvider implements IMarketDataProvider {
   async getCandles(
+    type: MarketDataType,
     symbol: string,
     timeFrames: TimeFramesType,
   ): Promise<Candle[]> {
     const url = new URL('https://api.binance.com/api/v3/klines');
     url.searchParams.set('symbol', normalizeSymbol(symbol));
     url.searchParams.set('interval', timeFrames);
-    url.searchParams.set('limit', '200');
+    url.searchParams.set('limit', '201');
 
     const response = await fetch(url.toString());
+
     if (!response.ok) {
       throw new BadGatewayException(
         `Binance request failed with status ${response.status}`,

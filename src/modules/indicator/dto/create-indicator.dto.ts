@@ -7,7 +7,7 @@ export class CreateIndicatorDto {
   @IsEnum(IndicatorType)
   type: IndicatorType;
 
-  @ApiProperty({ example: {} })
+  @ApiProperty({ example: { period: 200 } })
   @IsObject()
   config: any;
 }
