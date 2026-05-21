@@ -13,7 +13,7 @@ import { CreateScanruleDto } from './dto/create-scanrule.dto';
 import { UpdateScanruleDto } from './dto/update-scanrule.dto';
 import { GetUser } from 'src/common/decorators';
 import { AuthJwtGuard } from '../auth/guards';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
 @ApiBearerAuth()
@@ -22,21 +22,35 @@ export class ScanruleController {
   constructor(private readonly scanruleService: ScanruleService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create Scanrule ' })
   create(@Body() dto: CreateScanruleDto, @GetUser('id') userId: number) {
     return this.scanruleService.create(dto, userId);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Find all Scanrule ' })
   findAll(@GetUser('id') userId: number) {
     return this.scanruleService.findAll(userId);
   }
 
   @Get(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
+  @ApiOperation({ summary: 'Find one Scanrule ' })
   findOne(@Param('id') id: string, @GetUser('id') userId: number) {
     return this.scanruleService.findOne(+id, userId);
   }
 
   @Patch(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
+  @ApiOperation({ summary: 'Modify Scanrule ' })
   update(
     @Param('id') id: string,
     @Body() dto: UpdateScanruleDto,
@@ -46,6 +60,7 @@ export class ScanruleController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Del Scanrule ' })
   remove(@Param('id') id: string, @GetUser('id') userId: number) {
     return this.scanruleService.remove(+id, userId);
   }

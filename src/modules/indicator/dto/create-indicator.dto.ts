@@ -3,11 +3,11 @@ import { IndicatorType } from '@prisma/client';
 import { IsEnum, IsObject } from 'class-validator';
 
 export class CreateIndicatorDto {
-  @ApiProperty({ enum: IndicatorType })
+  @ApiProperty({ example: 'EMA' })
   @IsEnum(IndicatorType)
   type: IndicatorType;
 
-  @ApiProperty()
+  @ApiProperty({ example: { period: 200 } })
   @IsObject()
   config: any;
 }

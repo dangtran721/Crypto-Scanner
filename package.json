@@ -5,11 +5,15 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+  "prisma": {
+    "seed": "ts-node src/prisma/seed.ts"
+  },
   "scripts": {
     "build": "prisma generate && nest build",
     "start:prod": "prisma migrate deploy && node dist/main",
     "prisma:generate": "prisma generate",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "seed": "prisma db seed",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -20,7 +24,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "kill-port": "kill -9 $(lsof -t -i:3000)"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

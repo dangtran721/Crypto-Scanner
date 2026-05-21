@@ -15,9 +15,10 @@ export class BinanceProvider implements IMarketDataProvider {
     const url = new URL('https://api.binance.com/api/v3/klines');
     url.searchParams.set('symbol', normalizeSymbol(symbol));
     url.searchParams.set('interval', timeFrames);
-    url.searchParams.set('limit', '200');
+    url.searchParams.set('limit', '201');
 
     const response = await fetch(url.toString());
+
     if (!response.ok) {
       throw new BadGatewayException(
         `Binance request failed with status ${response.status}`,

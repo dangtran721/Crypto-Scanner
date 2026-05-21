@@ -35,7 +35,6 @@ export class MarketDataService {
       '4h': 1800,
       '1d': 3600,
     };
-
     const candles = await provider.getCandles(type, symbol, timeFrames);
 
     await this.redis.set(key, candles, ttlMap[timeFrames]);

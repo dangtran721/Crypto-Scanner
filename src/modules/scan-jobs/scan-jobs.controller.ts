@@ -5,7 +5,7 @@ import { GetUser } from 'src/common/decorators';
 import { AuthJwtGuard } from '../auth/guards';
 import { ScannerService } from './scanner.service';
 import { RunScanJobDto } from './dto/run-scan-job.dto';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
 @ApiBearerAuth()
@@ -17,22 +17,26 @@ export class ScanJobsController {
   ) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create Scanjob ' })
   create(@Body() dto: CreateScanJobDto, @GetUser('id') userId: number) {
     return this.scanJobsService.create(dto, userId);
   }
 
   @Get()
+  @ApiOperation({ summary: 'Find all Scanjob' })
   findAll(@GetUser('id') userId: number) {
     return this.scanJobsService.findAll(userId);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Find one Scanjob ' })
   findOne(@Param('id') id: string, @GetUser('id') userId: number) {
     return this.scanJobsService.findOne(+id, userId);
   }
 
   //Scanner:
   @Post(':id/run')
+  @ApiOperation({ summary: 'Scan all symbol ' })
   @ApiParam({
     name: 'id',
     type: Number,
@@ -47,6 +51,7 @@ export class ScanJobsController {
   }
 
   @Get(':id/results')
+  @ApiOperation({ summary: 'Show the result ' })
   @ApiParam({
     name: 'id',
     type: Number,
