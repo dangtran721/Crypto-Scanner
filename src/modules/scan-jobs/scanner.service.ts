@@ -16,7 +16,7 @@ import {
   ScanResultItemType,
   ScanResultType,
 } from './types';
-import { MarketDataType } from '../market-data/types';
+import { CandleResponse, MarketDataType } from '../market-data/types';
 
 @Injectable()
 export class ScannerService {
@@ -28,7 +28,7 @@ export class ScannerService {
 
   async resolveOperand(
     operand: ScanOperand,
-    candles: Candle[],
+    candles: Candle[] | CandleResponse,
     indicatorMap: Map<number, Indicator>,
   ): Promise<IndicatorValue> {
     if (operand.type === 'value') {
