@@ -3,14 +3,18 @@ import { Candle } from 'src/common/types';
 import { IMarketDataProvider } from '../market-data.interface';
 import { TimeFramesType } from 'src/modules/scanrule/types';
 import { MarketDataType } from '../types';
-
+import { Logger } from '@nestjs/common';
 @Injectable()
 export class MockProvider implements IMarketDataProvider {
+  private readonly logger = new Logger(MockProvider.name);
   async getCandles(
     type: MarketDataType,
     symbol: string,
     timeFrames: TimeFramesType,
   ): Promise<Candle[]> {
+    this.logger.warn(
+      `All market providers are unavailable. Falling back to mock data for ${symbol} ${timeFrames}.`,
+    );
     return Array.from({ length: 100 }).map((_, i) => ({
       time: Date.now() - (100 - i) * 60000,
       open: 100 + i,

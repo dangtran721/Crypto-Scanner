@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Candle } from 'src/common/types';
 import { MarketDataProviderMap } from './provider/provider-map';
 
@@ -8,6 +13,7 @@ import { MarketDataType } from './types';
 
 @Injectable()
 export class MarketDataService {
+  private readonly logger = new Logger(MarketDataService.name);
   constructor(
     private providerMap: MarketDataProviderMap,
     private readonly redis: RedisService,
@@ -35,10 +41,28 @@ export class MarketDataService {
       '4h': 1800,
       '1d': 3600,
     };
-    const candles = await provider.getCandles(type, symbol, timeFrames);
+    try {
+      const candles = await provider.getCandles(type, symbol, timeFrames);
 
-    await this.redis.set(key, candles, ttlMap[timeFrames]);
+      await this.redis.set(key, candles, ttlMap[timeFrames]);
 
-    return candles;
+      return candles;
+    } catch (error) {
+      if (
+        type === 'binance' &&
+        error instanceof BadGatewayException &&
+        error.message === 'Binance API is blocked in this deployment region'
+      ) {
+        this.logger.warn(
+          `Binance API blocked for ${symbol} ${timeFrames}, falling back to mock provider.`,
+        );
+
+        return this.providerMap
+          .getType('mock')
+          .getCandles('mock', symbol, timeFrames);
+      }
+
+      throw error;
+    }
   }
 }

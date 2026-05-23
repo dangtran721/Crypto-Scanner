@@ -19,6 +19,12 @@ export class BinanceProvider implements IMarketDataProvider {
 
     const response = await fetch(url.toString());
 
+    if (response.status === 451) {
+      throw new BadGatewayException(
+        'Binance API is blocked in this deployment region',
+      );
+    }
+
     if (!response.ok) {
       throw new BadGatewayException(
         `Binance request failed with status ${response.status}`,
