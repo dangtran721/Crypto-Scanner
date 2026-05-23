@@ -9,7 +9,7 @@ import { MarketDataProviderMap } from './provider/provider-map';
 
 import { TimeFramesType } from '../scanrule/types';
 import { RedisService } from '../redis/redis.service';
-import { MarketDataType } from './types';
+import { CandleResponse, MarketDataType } from './types';
 
 @Injectable()
 export class MarketDataService {
@@ -23,7 +23,7 @@ export class MarketDataService {
     type: MarketDataType,
     symbol: string,
     timeFrames: TimeFramesType,
-  ): Promise<Candle[]> {
+  ): Promise<Candle[] | CandleResponse> {
     const provider = this.providerMap.getType(type);
 
     if (!provider) {
@@ -56,10 +56,14 @@ export class MarketDataService {
         this.logger.warn(
           `Binance API blocked for ${symbol} ${timeFrames}, falling back to mock provider.`,
         );
-
-        return this.providerMap
-          .getType('mock')
-          .getCandles('mock', symbol, timeFrames);
+        return {
+          provider: 'mock',
+          fallback: true,
+          message: 'Binance API blocked in Railway region. Mock provider used.',
+          data: await this.providerMap
+            .getType('mock')
+            .getCandles('mock', symbol, timeFrames),
+        };
       }
 
       throw error;
