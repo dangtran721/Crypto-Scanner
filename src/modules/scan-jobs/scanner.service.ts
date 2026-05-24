@@ -191,8 +191,7 @@ export class ScannerService {
     } catch (error) {
       if (
         error instanceof BadGatewayException &&
-        error.message ===
-          'All market providers are unavailable, so mock market data was used'
+        error.message === 'Binance API is blocked in this deployment region'
       ) {
         providerUsed = 'mock';
         fallback = true;

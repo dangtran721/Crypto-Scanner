@@ -48,18 +48,6 @@ export class MarketDataService {
 
       return candles;
     } catch (error) {
-      if (
-        error instanceof BadGatewayException &&
-        error.message ===
-          'All market providers are unavailable, so mock market data was used'
-      ) {
-        const mockCandles = await this.providerMap
-          .getType('mock')
-          .getCandles('mock', symbol, timeFrames);
-
-        return mockCandles;
-      }
-
       throw error;
     }
   }
