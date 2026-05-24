@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Candle } from 'src/common/types';
 import { MarketDataProviderMap } from './provider/provider-map';
 
@@ -8,6 +13,7 @@ import { MarketDataType } from './types';
 
 @Injectable()
 export class MarketDataService {
+  private readonly logger = new Logger(MarketDataService.name);
   constructor(
     private providerMap: MarketDataProviderMap,
     private readonly redis: RedisService,
@@ -35,11 +41,14 @@ export class MarketDataService {
       '4h': 1800,
       '1d': 3600,
     };
+    try {
+      const candles = await provider.getCandles(type, symbol, timeFrames);
 
-    const candles = await provider.getCandles(type, symbol, timeFrames);
+      await this.redis.set(key, candles, ttlMap[timeFrames]);
 
-    await this.redis.set(key, candles, ttlMap[timeFrames]);
-
-    return candles;
+      return candles;
+    } catch (error) {
+      throw error;
+    }
   }
 }

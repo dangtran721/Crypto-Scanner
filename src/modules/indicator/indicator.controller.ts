@@ -16,7 +16,7 @@ import { UpdateIndicatorDto } from './dto/update-indicator.dto';
 import { AuthJwtGuard } from '../auth/guards';
 import { GetUser } from 'src/common/decorators';
 import { Indicator } from '@prisma/client';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 @UseGuards(AuthJwtGuard)
 @ApiBearerAuth()
@@ -25,6 +25,7 @@ export class IndicatorController {
   constructor(private readonly indicatorService: IndicatorService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create Indicator parameter' })
   @HttpCode(HttpStatus.CREATED)
   create(
     @Body() dto: CreateIndicatorDto,
@@ -34,12 +35,19 @@ export class IndicatorController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Find all my Indicator ' })
   @HttpCode(HttpStatus.OK)
   findAll(@GetUser('id') userId: number): Promise<Indicator[]> {
     return this.indicatorService.findAll(userId);
   }
 
   @Get(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
+  @ApiOperation({ summary: 'Find one my Indicator ' })
   @HttpCode(HttpStatus.OK)
   findOne(
     @Param('id') id: string,
@@ -49,6 +57,12 @@ export class IndicatorController {
   }
 
   @Patch(':id')
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+  })
+  @ApiOperation({ summary: 'Modify Indicator ' })
   @HttpCode(HttpStatus.OK)
   update(
     @Param('id') id: string,
@@ -59,6 +73,7 @@ export class IndicatorController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Del Indicator ' })
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id') id: string,

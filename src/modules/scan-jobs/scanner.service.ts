@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -12,6 +13,7 @@ import { Indicator, Prisma, ScanRun, Status } from '@prisma/client';
 import { ScanCondition, ScanOperand } from '../scanrule/types';
 import {
   IndicatorValue,
+  RunJobResponse,
   ScanJobWithData,
   ScanResultItemType,
   ScanResultType,
@@ -145,7 +147,7 @@ export class ScannerService {
     type: MarketDataType,
     scanJobId: number,
     userId: number,
-  ): Promise<ScanResultType[]> {
+  ): Promise<RunJobResponse> {
     const job = await this.prisma.scanJob.findFirst({
       where: { id: scanJobId, userId },
       include: {
@@ -178,7 +180,28 @@ export class ScannerService {
       },
     });
 
-    const rawResults = await this.evaluateJob(type, job, indicatorsMap);
+    let providerUsed: MarketDataType = type;
+    let fallback = false;
+    let message: string | undefined;
+
+    let rawResults: Omit<ScanResultType, 'scanRunId'>[];
+
+    try {
+      rawResults = await this.evaluateJob(type, job, indicatorsMap);
+    } catch (error) {
+      if (
+        error instanceof BadGatewayException &&
+        error.message === 'Binance API is blocked in this deployment region'
+      ) {
+        providerUsed = 'mock';
+        fallback = true;
+        message =
+          'All market providers are unavailable, so mock market data was used';
+        rawResults = await this.evaluateJob('mock', job, indicatorsMap);
+      } else {
+        throw error;
+      }
+    }
 
     try {
       const results = await this.prisma.$transaction(async (tx) => {
@@ -198,7 +221,13 @@ export class ScannerService {
 
         return resultsWithRunId;
       });
-      return results;
+      return {
+        providerRequested: type,
+        providerUsed,
+        fallback,
+        message,
+        results,
+      };
     } catch (error) {
       await this.prisma.scanJob.update({
         where: { id: job.id, userId },

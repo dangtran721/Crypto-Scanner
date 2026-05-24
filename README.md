@@ -1,98 +1,319 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Crypto Scanner Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Rule-based crypto scanning backend built with NestJS, Prisma, PostgreSQL, Redis, and Swagger.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The project lets users manage watchlists, technical indicators, scan rules, scan jobs, scan runs, and scan results. It supports market data providers through an abstraction layer with `mock` and `binance` implementations.
 
-## Description
+## Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Redis
+- Swagger
+- Docker Compose
 
-## Project setup
+## Features
 
-```bash
-$ npm install
+- JWT authentication and token-based auth flow
+- User ownership validation on private resources
+- Watchlist CRUD and watchlist items management
+- Indicator CRUD with validation
+- Scan rule CRUD using JSON-based rule logic
+- Scan job creation and scan execution
+- Scan run and scan result persistence
+- Dashboard read model for aggregated user data
+- Market data abstraction with:
+  - `mock` provider
+  - `binance` provider
+- Redis candle caching by provider / symbol / timeframe
+- Swagger docs at `/docs`
+
+## Current Scanner Flow
+
+1. Create a scan job
+2. Run the job with a provider type such as `mock` or `binance`
+3. Load watchlist, scan rule, and indicators
+4. Fetch candles from the selected market data provider
+5. Evaluate the rule for each symbol
+6. Create a scan run
+7. Save scan results
+8. Update scan job status
+9. Read historical run results
+
+## Supported Rule Operators
+
+- `lt`
+- `gt`
+- `cross_above`
+- `cross_below`
+
+## Supported Indicators
+
+- `EMA`
+- `RSI`
+- `ICHIMOKU`
+
+Note:
+
+- `ICHIMOKU` exists at the indicator layer, but scanner runtime currently blocks it.
+
+## Project Structure
+
+```text
+src/
+  common/
+  modules/
+    auth/
+    dashboard/
+    indicator/
+    market-data/
+    redis/
+    scan-jobs/
+    scanrule/
+    token/
+    user/
+    watchlists/
+  prisma/
+prisma/
 ```
 
-## Compile and run the project
+## Environment Variables
 
-```bash
-# development
-$ npm run start
+Create a `.env` file from `.env.example` and fill in the values.
 
-# watch mode
-$ npm run start:dev
+Required variables:
 
-# production mode
-$ npm run start:prod
+```env
+PORT=3000
+
+AUTH_JWT_SECRET=your-secret
+AUTH_ACCESS_TOKEN_EXPIRES_IN=15
+AUTH_REFRESH_TOKEN_EXPIRES_IN=7
+
+DATABASE_PORT=5432
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_NAME=crypto_scanner
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/crypto_scanner?schema=public
 ```
 
-## Run tests
+Notes:
+
+- `AUTH_ACCESS_TOKEN_EXPIRES_IN` and `AUTH_REFRESH_TOKEN_EXPIRES_IN` are parsed as numbers.
+- `REDIS_PASSWORD` is optional for local Docker, but useful for cloud Redis providers.
+
+## Local Setup
+
+Install dependencies:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Start PostgreSQL and Redis:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+docker compose up -d
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Run Prisma migrations:
 
-## Resources
+```bash
+npx prisma migrate deploy
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Seed demo data:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npm run seed
+```
 
-## Support
+Start the app in development mode:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+npm run dev
+```
 
-## Stay in touch
+App URL:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```text
+http://localhost:3000
+```
+
+Swagger URL:
+
+```text
+http://localhost:3000/docs
+```
+
+## Available Scripts
+
+```bash
+npm run dev
+npm run build
+npm run start:prod
+npm run seed
+npm run test
+npm run test:e2e
+npm run lint
+```
+
+## Demo Seed Data
+
+The current seed creates demo records for:
+
+- demo user
+- admin user
+- watchlist
+- watchlist items
+- indicators
+- scan rule
+
+Seed order:
+
+1. users
+2. admin
+3. watchlist
+4. watchlist items
+5. indicators
+6. scan rule
+
+Important:
+
+- Seed data is intended for local/demo bootstrap.
+- Some seeded IDs are still assumed explicitly in the seed flow, so a completely fresh database is the safest way to use the current seed set.
+
+## Main API Areas
+
+### Auth
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/logout`
+- `POST /auth/refresh`
+- `GET /auth/me`
+
+### Watchlists
+
+- `POST /watchlists`
+- `GET /watchlists/me`
+- `GET /watchlists/:id`
+- `PATCH /watchlists/:id`
+- `DELETE /watchlists/:id`
+- `POST /watchlists/:id/item`
+- `POST /watchlists/:id/items/bulk`
+- `DELETE /watchlists/:id/items/:itemId`
+
+### Indicators
+
+- `POST /indicator`
+- `GET /indicator`
+- `GET /indicator/:id`
+- `PATCH /indicator/:id`
+- `DELETE /indicator/:id`
+
+### Scan Rules
+
+- `POST /scan-rules`
+- `GET /scan-rules`
+- `GET /scan-rules/:id`
+- `PATCH /scan-rules/:id`
+- `DELETE /scan-rules/:id`
+
+### Scan Jobs
+
+- `POST /scan-jobs`
+- `GET /scan-jobs`
+- `GET /scan-jobs/:id`
+- `POST /scan-jobs/:id/run`
+- `GET /scan-jobs/:id/results`
+
+### Dashboard
+
+- `GET /dash-board/me`
+
+## Example End-to-End Flow
+
+1. Register or log in
+2. Create a watchlist
+3. Add symbols to the watchlist
+4. Create indicators
+5. Create a scan rule
+6. Create a scan job
+7. Run the job with:
+
+```json
+{
+  "type": "mock"
+}
+```
+
+or:
+
+```json
+{
+  "type": "binance"
+}
+```
+
+8. Read scan results from `GET /scan-jobs/:id/results`
+
+## Market Data Notes
+
+- `mock` provider is useful for local demos and fallback scenarios.
+- `binance` provider fetches real candlestick data from `api.binance.com`.
+- Binance may return `451` in some deployment regions.
+
+Current codebase note:
+
+- The run-job response type already includes:
+  - `providerRequested`
+  - `providerUsed`
+  - `fallback`
+  - `message`
+  - `results`
+- If deployed in a region where Binance is blocked, the fallback flow should be handled carefully so the scanner still receives plain `Candle[]`.
+
+## Deploy Notes
+
+This project can be deployed to platforms such as Railway.
+
+Before deploying:
+
+1. Set all environment variables on the platform
+2. Provision PostgreSQL and Redis
+3. Run database migrations
+4. Seed only if you want demo data
+
+Suggested production commands:
+
+Build:
+
+```bash
+npm run build
+```
+
+Start:
+
+```bash
+npm run start:prod
+```
+
+## Known Limitations
+
+- Scanner runtime currently blocks `ICHIMOKU`
+- Binance access may be region-blocked in some cloud deployments
+- Seed data is best used on a fresh database
+- Swagger examples are not yet fully curated for every endpoint
+- There are still local changes in progress around market-data fallback and run-job response behavior
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is for learning and portfolio purposes.

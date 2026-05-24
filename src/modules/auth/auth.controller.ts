@@ -14,7 +14,7 @@ import { RefreshToken } from '../token/dto/refresh-token.dto';
 import { AuthResponseDto } from './dto/auth-response.entity';
 import { AuthJwtGuard } from './guards';
 import { GetUser, Public } from 'src/common/decorators';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
 @ApiBearerAuth()
 @Controller('auth')
@@ -42,6 +42,7 @@ export class AuthController {
   }
 
   @Get('me')
+  @ApiOperation({ summary: 'Show current User' })
   @UseGuards(AuthJwtGuard)
   getMe(@GetUser() user: User) {
     return user;
