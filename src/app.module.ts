@@ -13,6 +13,8 @@ import { MarketDataModule } from './modules/market-data/market-data.module';
 import { DashBoardModule } from './modules/dashboard/dashboard.module';
 import { UserModule } from './modules/user/user.module';
 import { RedisModule } from './modules/redis/redis.module';
+import { RealtimeModule } from './modules/realtime/realtime.module';
+import { MarketStreamModule } from './modules/market-stream/market-stream.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { RedisModule } from './modules/redis/redis.module';
     MarketDataModule,
     DashBoardModule,
     RedisModule,
+    MarketStreamModule,
+    RealtimeModule,
   ],
 })
 export class AppModule {}
