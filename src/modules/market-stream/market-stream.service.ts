@@ -21,10 +21,12 @@ export class MarketStreamService implements OnModuleInit {
     });
 
     const symbols = await this.getActiveSymbols();
+    const streamSymbols = symbols.length > 0 ? symbols : ['BTCUSDT', 'ETHUSDT'];
+    this.mockStream.start(streamSymbols);
 
-    if (symbols.length > 0) {
-      this.mockStream.start(symbols);
-    }
+    // if (symbols.length > 0) {
+    //   this.mockStream.start(symbols);
+    // }
   }
 
   onTick(handler: (tick: MarketTick) => Promise<void> | void) {

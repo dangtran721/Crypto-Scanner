@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Crypto Scanner Realtime Demo</title>
+
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        background: #0f172a;
+        color: #e5e7eb;
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      input,
+      button {
+        padding: 8px 10px;
+        border-radius: 6px;
+        border: 1px solid #334155;
+      }
+
+      button {
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 16px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #334155;
+        padding: 10px;
+        text-align: left;
+      }
+
+      .up {
+        color: #22c55e;
+      }
+
+      .down {
+        color: #ef4444;
+      }
+
+      #status {
+        margin-bottom: 12px;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Crypto Scanner Realtime Demo</h1>
+
+    <p class="subtitle">
+      This is only for testing realtime features, not real data.
+    </p>
+
+    <div class="toolbar">
+      <input id="serverUrl" value="http://localhost:3000/scan" size="32" />
+      <input id="userId" value="1" size="6" />
+      <button onclick="connect()">Connect</button>
+      <button onclick="disconnect()">Disconnect</button>
+    </div>
+
+    <div id="status">Disconnected</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Provider</th>
+          <th>Price</th>
+          <th>Updated At</th>
+        </tr>
+      </thead>
+      <tbody id="priceRows"></tbody>
+    </table>
+
+    <script>
+      let socket;
+      const prices = new Map();
+
+      function connect() {
+        const url = document.getElementById('serverUrl').value;
+        const userId = Number(document.getElementById('userId').value);
+
+        socket = io(url);
+
+        socket.on('scan.connected', (payload) => {
+          setStatus(`Connected: ${payload.socketId}`);
+          socket.emit('scan.join_user', { userId });
+        });
+
+        socket.on('scan.joined_user', (payload) => {
+          setStatus(`Joined user room: ${payload.userId}`);
+        });
+
+        socket.on('scan.price_tick', (tick) => {
+          const prev = prices.get(tick.symbol);
+          const direction = prev && tick.price >= prev.price ? 'up' : 'down';
+
+          prices.set(tick.symbol, {
+            ...tick,
+            direction,
+          });
+
+          render();
+        });
+
+        socket.on('disconnect', () => {
+          setStatus('Disconnected');
+        });
+      }
+
+      function disconnect() {
+        if (socket) {
+          socket.disconnect();
+        }
+      }
+
+      function setStatus(text) {
+        document.getElementById('status').textContent = text;
+      }
+
+      function render() {
+        const tbody = document.getElementById('priceRows');
+
+        tbody.innerHTML = Array.from(prices.values())
+          .map(
+            (item) => `
+                <tr>
+                  <td>${item.symbol}</td>
+                  <td>${item.provider}</td>
+                  <td class="${item.direction}">${item.price}</td>
+                  <td>${item.updatedAt}</td>
+                </tr>
+              `,
+          )
+          .join('');
+      }
+    </script>
+  </body>
+</html>
