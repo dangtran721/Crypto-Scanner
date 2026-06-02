@@ -2,8 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Crypto Scanner Realtime Demo</title>
-
+    <title>Crypto Scanner Realtime Test</title>
     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
     <style>
       body {
@@ -15,6 +14,7 @@
 
       .toolbar {
         display: flex;
+        flex-wrap: wrap;
         gap: 8px;
         margin-bottom: 16px;
       }
@@ -24,6 +24,10 @@
         padding: 8px 10px;
         border-radius: 6px;
         border: 1px solid #334155;
+      }
+
+      input {
+        min-width: 360px;
       }
 
       button {
@@ -54,22 +58,23 @@
       }
 
       #status {
-        margin-bottom: 12px;
         color: #94a3b8;
+        margin-bottom: 12px;
       }
     </style>
   </head>
 
   <body>
-    <h1>Crypto Scanner Realtime Demo</h1>
-
-    <p class="subtitle">
-      This is only for testing realtime features, not real data.
-    </p>
+    <h1>Crypto Scanner Realtime Test</h1>
 
     <div class="toolbar">
-      <input id="serverUrl" value="http://localhost:3000/scan" size="32" />
-      <input id="userId" value="1" size="6" />
+      <input
+        id="serverUrl"
+        value="https://crypto-scanner-production-8ebe.up.railway.app/scan"
+      />
+      <input id="userId" value="1" style="min-width: 60px" />
+      <button onclick="useRailway()">Railway</button>
+      <button onclick="useLocal()">Local</button>
       <button onclick="connect()">Connect</button>
       <button onclick="disconnect()">Disconnect</button>
     </div>
@@ -89,17 +94,40 @@
     </table>
 
     <script>
+      const endpoints = {
+        railway: 'https://crypto-scanner-production-8ebe.up.railway.app/scan',
+        local: 'http://localhost:3000/scan',
+      };
+
       let socket;
       const prices = new Map();
 
+      function useRailway() {
+        document.getElementById('serverUrl').value = endpoints.railway;
+      }
+
+      function useLocal() {
+        document.getElementById('serverUrl').value = endpoints.local;
+      }
+
       function connect() {
+        disconnect();
+
         const url = document.getElementById('serverUrl').value;
         const userId = Number(document.getElementById('userId').value);
 
-        socket = io(url);
+        setStatus(`Connecting to ${url}...`);
+
+        socket = io(url, {
+          transports: ['websocket', 'polling'],
+        });
+
+        socket.on('connect', () => {
+          setStatus(`Socket connected: ${socket.id}`);
+        });
 
         socket.on('scan.connected', (payload) => {
-          setStatus(`Connected: ${payload.socketId}`);
+          setStatus(`Gateway connected: ${payload.socketId}`);
           socket.emit('scan.join_user', { userId });
         });
 
@@ -119,14 +147,19 @@
           render();
         });
 
-        socket.on('disconnect', () => {
-          setStatus('Disconnected');
+        socket.on('connect_error', (error) => {
+          setStatus(`Connect error: ${error.message}`);
+        });
+
+        socket.on('disconnect', (reason) => {
+          setStatus(`Disconnected: ${reason}`);
         });
       }
 
       function disconnect() {
         if (socket) {
           socket.disconnect();
+          socket = undefined;
         }
       }
 
@@ -138,6 +171,7 @@
         const tbody = document.getElementById('priceRows');
 
         tbody.innerHTML = Array.from(prices.values())
+          .sort((a, b) => a.symbol.localeCompare(b.symbol))
           .map(
             (item) => `
                 <tr>
