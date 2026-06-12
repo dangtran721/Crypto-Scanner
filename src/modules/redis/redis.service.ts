@@ -1,41 +1,51 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { AllTypeConfig } from 'src/common/config/config.type';
+import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class RedisService {
-  private readonly redis: Redis;
+  private redis: Redis;
+  private readonly useUpstash: boolean;
 
   constructor(private configService: ConfigService<AllTypeConfig>) {
-    this.redis = new Redis({
-      host: this.configService.getOrThrow('app.redisHost', {
-        infer: true,
-      }),
-
-      port: this.configService.getOrThrow('app.redisPort', {
-        infer: true,
-      }),
-
-      password: this.configService.get('app.redisPassword', { infer: true }),
+    this.useUpstash = this.configService.getOrThrow('app.redis.useUpstash', {
+      infer: true,
     });
+
+    const redisConfig = this.configService.getOrThrow('app.redis', {
+      infer: true,
+    });
+
+    if (this.useUpstash) {
+      this.redis = new Redis(redisConfig.upstash!.redisUrl!);
+    } else {
+      this.redis = new Redis({
+        host: redisConfig.local!.host,
+        port: redisConfig.local!.port,
+        password: redisConfig.local!.password,
+      });
+    }
   }
 
-  async get(key: string) {
-    const rawValue = await this.redis.get(key);
-    if (!rawValue) {
-      return;
+  async get<T>(key: string): Promise<T | null> {
+    const value = await this.redis.get(key);
+
+    if (!value) return null;
+
+    if (typeof value === 'string') {
+      return JSON.parse(value);
     }
-    const jsonValue = JSON.parse(rawValue);
-    return jsonValue;
+
+    return value as T;
   }
 
   async set(key: string, value: unknown, ttl?: number) {
-    const jsonValue = JSON.stringify(value);
+    const json = JSON.stringify(value);
 
-    if (ttl) {
-      return this.redis.set(key, jsonValue, 'EX', ttl);
-    }
-    return this.redis.set(key, jsonValue);
+    const client = this.redis as Redis;
+
+    return ttl ? client.set(key, json, 'EX', ttl) : client.set(key, json);
   }
 
   async del(key: string) {

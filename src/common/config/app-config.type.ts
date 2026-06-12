@@ -1,6 +1,19 @@
 export type AppConfig = {
   port: number;
-  redisPort: number;
-  redisHost: string;
-  redisPassword: string;
+
+  redis: {
+    useUpstash: boolean;
+
+    local?: {
+      host: string;
+      port: number;
+      password?: string;
+    };
+
+    upstash?: {
+      redisUrl: string;
+      url: string;
+      token: string;
+    };
+  };
 };
