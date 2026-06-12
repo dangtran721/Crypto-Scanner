@@ -31,7 +31,7 @@ export class MarketDataService {
     }
     const key = `candles:${type}:${symbol}:${timeFrames}`;
 
-    const cached = await this.redis.get(key);
+    const cached = await this.redis.get<Candle[]>(key);
     if (cached) {
       return cached;
     }
