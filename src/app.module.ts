@@ -15,6 +15,7 @@ import { UserModule } from './modules/user/user.module';
 import { RedisModule } from './modules/redis/redis.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { MarketStreamModule } from './modules/market-stream/market-stream.module';
+import { AlertsModule } from './modules/alerts/alerts.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MarketStreamModule } from './modules/market-stream/market-stream.module
     RedisModule,
     MarketStreamModule,
     RealtimeModule,
+    AlertsModule,
   ],
 })
 export class AppModule {}
