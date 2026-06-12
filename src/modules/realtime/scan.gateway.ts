@@ -16,7 +16,7 @@ import { Server, Socket } from 'socket.io';
 })
 export class ScanGateway implements OnGatewayConnection {
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   handleConnection(client: Socket) {
     client.emit('scan.connected', {

@@ -11,6 +11,7 @@ async function bootstrap() {
   setupSwagger(app);
 
   const configService = app.get(ConfigService<AllTypeConfig>);
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -18,7 +19,9 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
   await app.listen(
     configService.getOrThrow('app.port', { infer: true }) ?? 3000,
   );
