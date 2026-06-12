@@ -11,6 +11,7 @@ export type AppConfig = {
     };
 
     upstash?: {
+      redisUrl: string;
       url: string;
       token: string;
     };

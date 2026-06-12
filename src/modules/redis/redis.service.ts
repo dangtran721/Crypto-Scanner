@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
-import { Redis as UpstashRedis } from '@upstash/redis';
 import { AllTypeConfig } from 'src/common/config/config.type';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RedisService {
-  private redis: Redis | UpstashRedis;
+  private redis: Redis;
   private readonly useUpstash: boolean;
 
   constructor(private configService: ConfigService<AllTypeConfig>) {
@@ -19,15 +18,12 @@ export class RedisService {
     });
 
     if (this.useUpstash) {
-      this.redis = new UpstashRedis({
-        url: redisConfig.upstash?.url,
-        token: redisConfig.upstash?.token,
-      });
+      this.redis = new Redis(redisConfig.upstash!.redisUrl!);
     } else {
       this.redis = new Redis({
-        host: redisConfig.local?.host,
-        port: redisConfig.local?.port,
-        password: redisConfig.local?.password,
+        host: redisConfig.local!.host,
+        port: redisConfig.local!.port,
+        password: redisConfig.local!.password,
       });
     }
   }
@@ -47,13 +43,8 @@ export class RedisService {
   async set(key: string, value: unknown, ttl?: number) {
     const json = JSON.stringify(value);
 
-    if (this.useUpstash) {
-      const client = this.redis as UpstashRedis;
-
-      return ttl ? client.set(key, json, { ex: ttl }) : client.set(key, json);
-    }
-
     const client = this.redis as Redis;
+
     return ttl ? client.set(key, json, 'EX', ttl) : client.set(key, json);
   }
 

@@ -13,6 +13,7 @@ const envSchema = z.object({
   REDIS_PASSWORD: z.string().optional(),
 
   // Upstash Redis
+  REDIS_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 });
@@ -40,8 +41,7 @@ export default registerAs('app', () => {
       },
 
       upstash: {
-        url: envVars.UPSTASH_REDIS_REST_URL,
-        token: envVars.UPSTASH_REDIS_REST_TOKEN,
+        redisUrl: envVars.REDIS_URL,
       },
     },
   };
