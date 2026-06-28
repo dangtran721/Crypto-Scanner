@@ -129,7 +129,7 @@ export class ScannerService {
       const result = await this.evaluateSymbol(
         type,
         item.coinSymbol,
-        job.scanRule.logic,
+        job.scanRule.logic as ScanCondition,
         indicatorsMap,
       );
 
