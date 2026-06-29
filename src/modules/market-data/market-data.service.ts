@@ -41,6 +41,7 @@ export class MarketDataService {
       '4h': 1800,
       '1d': 3600,
     };
+
     try {
       const candles = await provider.getCandles(type, symbol, timeFrames);
 
