@@ -5,26 +5,45 @@ import { ScannerService } from 'src/modules/scan-jobs/scanner.service';
 import { ScanCondition, ScanOperand } from 'src/modules/scanrule/types';
 import { PrismaService } from 'src/prisma/prisma.service';
 
+const specGetCandles = jest.fn();
+const specGetStrategy = jest.fn();
+
+// Mocking ScannerService property
+const specPrismaService = {} as PrismaService;
+
+const specMarketDataService = {
+  getCandles: specGetCandles,
+} as unknown as MarketDataService;
+
+const specStrategyMap = {
+  getStrategy: specGetStrategy,
+} as unknown as StrategiesMap;
+
+// Create service
+const service = new ScannerService(
+  specPrismaService,
+  specMarketDataService,
+  specStrategyMap,
+);
+
+// Mocking evaluateSymbol property
+const specType = 'binance';
+const specSymbol = ' BTCUSDT';
+// Indicator
+const specIndicator = {
+  id: 1,
+  type: 'EMA',
+  userId: 1,
+  config: { period: 34 },
+  createdAt: new Date(),
+} as Indicator;
+
+const indicatorMap = new Map<number, Indicator>();
+indicatorMap.set(1, specIndicator);
+
 describe('ScannerService - resolveOperand', () => {
-  let service: ScannerService;
-
-  const specPrismaService = {} as PrismaService;
-  const specMarketDataService = {} as MarketDataService;
-
-  const specGetStrategy = jest.fn();
-
-  const specStrategyMap = {
-    getStrategy: specGetStrategy,
-  } as unknown as StrategiesMap;
-
   beforeEach(() => {
     specGetStrategy.mockReset();
-
-    service = new ScannerService(
-      specPrismaService,
-      specMarketDataService,
-      specStrategyMap,
-    );
   });
   it('should return value directly when operand type is "value"', async () => {
     const operand = {
@@ -128,46 +147,15 @@ describe('ScannerService - resolveOperand', () => {
 });
 
 describe('ScannerService - evaluateSymbol', () => {
-  let service: ScannerService;
-
-  const specGetCandles = jest.fn().mockReturnValue([]);
-  const specGetStrategy = jest.fn();
-
-  const specPrismaService = {} as PrismaService;
-  const specMarketDataService = {
-    getCandles: specGetCandles,
-  } as unknown as MarketDataService;
-
-  const specStrategyMap = {
-    getStrategy: specGetStrategy,
-  } as unknown as StrategiesMap;
-
   beforeEach(() => {
-    specGetCandles.mockReset();
     specGetStrategy.mockReset();
-
-    service = new ScannerService(
-      specPrismaService,
-      specMarketDataService,
-      specStrategyMap,
-    );
+    specGetCandles.mockReset();
   });
 
-  const specType = 'binance';
-  const specSymbol = ' BTCUSDT';
-
-  const specIndicator = {
-    id: 1,
-    type: 'EMA',
-    userId: 1,
-    config: { period: 34 },
-    createdAt: new Date(),
-  } as Indicator;
-
-  const specLogic = {
+  const specInvalidLogic = {
     type: 'condition',
     timeFrames: '1d',
-    operator: 'idk',
+    operator: 'Invalid',
     left: { type: 'indicator', indicatorId: 1 },
     right: {
       type: 'value',
@@ -175,16 +163,76 @@ describe('ScannerService - evaluateSymbol', () => {
     },
   } as unknown as ScanCondition;
 
-  it(`Should throw Unsupported operator: ${specLogic.operator} when !operatorFn`, async () => {
-    const indicatorMap = new Map<number, Indicator>();
-    indicatorMap.set(1, specIndicator);
-
+  it(`Should throw Unsupported operator: ${specInvalidLogic.operator} when !operatorFn`, async () => {
     specGetStrategy.mockReturnValue({
       calculate: jest.fn().mockReturnValue([10, 20]),
     });
 
     await expect(
-      service.evaluateSymbol(specType, specSymbol, specLogic, indicatorMap),
-    ).rejects.toThrow(`Unsupported operator: ${specLogic.operator}`);
+      service.evaluateSymbol(
+        specType,
+        specSymbol,
+        specInvalidLogic,
+        indicatorMap,
+      ),
+    ).rejects.toThrow(`Unsupported operator: ${specInvalidLogic.operator}`);
+  });
+
+  it('Should return right values', async () => {
+    const specLogic = {
+      ...specInvalidLogic,
+      operator: 'cross_above',
+    } as unknown as ScanCondition;
+
+    specGetCandles.mockReturnValue([]);
+    specGetStrategy.mockReturnValue({
+      calculate: jest.fn().mockReturnValue([10, 20]),
+    });
+
+    expect(
+      await service.evaluateSymbol(
+        specType,
+        specSymbol,
+        specLogic,
+        indicatorMap,
+      ),
+    ).toEqual({
+      type: specType,
+      coinSymbol: specSymbol,
+      result: {
+        left: { curr: 20, prev: 10 },
+        right: { curr: 10, prev: 10 },
+        operator: specLogic.operator,
+      },
+      isValidSetup: true,
+    });
+  });
+});
+
+describe('ScannerService - evaluateJob', () => {
+  const job = {
+    id: 1,
+    scanRule: {
+      logic: {},
+    },
+    watchlist: {
+      items: [
+        {
+          coinSymbol: 'BTCUSDT',
+        },
+        {
+          coinSymbol: 'ETHUSDT',
+        },
+      ],
+    },
+  };
+  it('should throw error if evaluateSymbol fails', async () => {
+    // Mocking evaluateSymbol throw  Error('Symbol error')
+    jest
+      .spyOn(service, 'evaluateSymbol')
+      .mockRejectedValue(new Error('Symbol error'));
+
+    const result = service.evaluateJob(specType, job, indicatorMap);
+    await expect(result).rejects.toThrow('Symbol error');
   });
 });
