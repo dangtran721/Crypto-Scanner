@@ -1,3 +1,4 @@
+import { BadGatewayException } from '@nestjs/common';
 import { Indicator } from '@prisma/client';
 import { StrategiesMap } from 'src/modules/indicator/strategies';
 import { MarketDataService } from 'src/modules/market-data/market-data.service';
@@ -7,9 +8,16 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 const specGetCandles = jest.fn();
 const specGetStrategy = jest.fn();
+const specPrismaFindFirst = jest.fn();
+const specPrismaFindMany = jest.fn();
+const specPrismaUpdate = jest.fn();
 
 // Mocking ScannerService property
-const specPrismaService = {} as PrismaService;
+const specPrismaService = {
+  scanJob: { findFirst: specPrismaFindFirst, update: specPrismaUpdate },
+  indicator: { findMany: specPrismaFindMany },
+  $transaction: jest.fn(),
+} as unknown as PrismaService;
 
 const specMarketDataService = {
   getCandles: specGetCandles,
@@ -40,6 +48,17 @@ const specIndicator = {
 
 const indicatorMap = new Map<number, Indicator>();
 indicatorMap.set(1, specIndicator);
+
+const specInvalidLogic = {
+  type: 'condition',
+  timeFrames: '1d',
+  operator: 'Invalid',
+  left: { type: 'indicator', indicatorId: 1 },
+  right: {
+    type: 'value',
+    value: 10,
+  },
+} as unknown as ScanCondition;
 
 describe('ScannerService - resolveOperand', () => {
   beforeEach(() => {
@@ -152,17 +171,6 @@ describe('ScannerService - evaluateSymbol', () => {
     specGetCandles.mockReset();
   });
 
-  const specInvalidLogic = {
-    type: 'condition',
-    timeFrames: '1d',
-    operator: 'Invalid',
-    left: { type: 'indicator', indicatorId: 1 },
-    right: {
-      type: 'value',
-      value: 10,
-    },
-  } as unknown as ScanCondition;
-
   it(`Should throw Unsupported operator: ${specInvalidLogic.operator} when !operatorFn`, async () => {
     specGetStrategy.mockReturnValue({
       calculate: jest.fn().mockReturnValue([10, 20]),
@@ -254,5 +262,71 @@ describe('ScannerService - evaluateJob', () => {
     expect((await results)[1].coinSymbol).toBe('ETHUSDT');
 
     expect(evaluateSymbolSpyOn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('ScannerService - runJob', () => {
+  beforeEach(() => {
+    specPrismaFindFirst.mockReset();
+  });
+
+  it('Should throw ScanJob not found when !job', async () => {
+    await expect(service.runJob(specType, 1, 1)).rejects.toThrow(
+      'ScanJob not found',
+    );
+  });
+
+  it('Should throw Invalid indicators when indicators != indicatorIds', async () => {
+    const specLogic = {
+      ...specInvalidLogic,
+      operator: 'cross_above',
+    } as unknown as ScanCondition;
+
+    specPrismaFindFirst.mockReturnValue({ scanRule: { logic: { specLogic } } });
+
+    specPrismaFindMany.mockReturnValue(1);
+
+    await expect(service.runJob(specType, 1, 1)).rejects.toThrow(
+      'Invalid indicators',
+    );
+  });
+
+  it('should fallback to mock provider when Binance API is blocked', async () => {
+    const specLogic = {
+      ...specInvalidLogic,
+      operator: 'cross_above',
+    } as unknown as ScanCondition;
+
+    specPrismaFindFirst.mockReturnValue({ scanRule: { logic: { specLogic } } });
+    specPrismaFindMany.mockReturnValue([]);
+
+    const evaluateJobSpy = jest.spyOn(service, 'evaluateJob') as jest.Mock;
+
+    const error = new BadGatewayException(
+      'Binance API is blocked in this deployment region',
+    );
+    error.message = 'Binance API is blocked in this deployment region';
+
+    const resolvedValue = [
+      {
+        coinSymbol: 'BTCUSDT',
+        result: {
+          left: { curr: 1, prev: 1 },
+          right: { curr: 1, prev: 1 },
+          operator: 'gt',
+        },
+        isValidSetup: true,
+      },
+    ];
+
+    evaluateJobSpy
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce(resolvedValue);
+
+    const result = await service.runJob(specType, 1, 1);
+
+    expect(result.fallback).toBe(true);
+    expect(result.providerUsed).toBe('mock');
+    expect(evaluateJobSpy).toHaveBeenCalledTimes(2);
   });
 });
