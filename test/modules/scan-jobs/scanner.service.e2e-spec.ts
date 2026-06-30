@@ -226,6 +226,12 @@ describe('ScannerService - evaluateJob', () => {
       ],
     },
   };
+
+  // Got it before faced, a mock state did not reset causing those stacked up
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should throw error if evaluateSymbol fails', async () => {
     // Mocking evaluateSymbol throw  Error('Symbol error')
     jest
@@ -234,5 +240,19 @@ describe('ScannerService - evaluateJob', () => {
 
     const result = service.evaluateJob(specType, job, indicatorMap);
     await expect(result).rejects.toThrow('Symbol error');
+  });
+
+  it('should evaluate all items in the watchlist', async () => {
+    const evaluateSymbolSpyOn = jest
+      .spyOn(service, 'evaluateSymbol')
+      .mockImplementation(async (type, symbol) => {
+        return { type, symbol } as any;
+      });
+    const results = service.evaluateJob(specType, job, indicatorMap);
+
+    expect((await results)[0].coinSymbol).toBe('BTCUSDT');
+    expect((await results)[1].coinSymbol).toBe('ETHUSDT');
+
+    expect(evaluateSymbolSpyOn).toHaveBeenCalledTimes(2);
   });
 });
