@@ -11,12 +11,13 @@ const specGetStrategy = jest.fn();
 const specPrismaFindFirst = jest.fn();
 const specPrismaFindMany = jest.fn();
 const specPrismaUpdate = jest.fn();
+const specPrismaTransaction = jest.fn();
 
 // Mocking ScannerService property
 const specPrismaService = {
   scanJob: { findFirst: specPrismaFindFirst, update: specPrismaUpdate },
   indicator: { findMany: specPrismaFindMany },
-  $transaction: jest.fn(),
+  $transaction: specPrismaTransaction,
 } as unknown as PrismaService;
 
 const specMarketDataService = {
@@ -328,5 +329,58 @@ describe('ScannerService - runJob', () => {
     expect(result.fallback).toBe(true);
     expect(result.providerUsed).toBe('mock');
     expect(evaluateJobSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('should fallback to mock provider when Binance API is blocked', async () => {
+    const specLogic = {
+      ...specInvalidLogic,
+      operator: 'cross_above',
+    } as unknown as ScanCondition;
+
+    specPrismaFindFirst.mockReturnValue({ scanRule: { logic: { specLogic } } });
+    specPrismaFindMany.mockReturnValue([]);
+
+    const evaluateJobSpy = jest.spyOn(service, 'evaluateJob') as jest.Mock;
+
+    const error = new BadGatewayException(
+      'Binance API is blocked in this deployment region',
+    );
+    error.message = 'Binance API is blocked in this deployment region';
+
+    const resolvedValue = [
+      {
+        coinSymbol: 'BTCUSDT',
+        result: {
+          left: { curr: 1, prev: 1 },
+          right: { curr: 1, prev: 1 },
+          operator: 'gt',
+        },
+        isValidSetup: true,
+      },
+    ];
+
+    specPrismaTransaction.mockReturnValue({
+      data: {
+        jobId: 1,
+      },
+    });
+
+    evaluateJobSpy
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce(resolvedValue);
+
+    const result = await service.runJob(specType, 1, 1);
+    expect(result).toEqual({
+      providerRequested: 'binance',
+      providerUsed: 'mock',
+      fallback: true,
+      message:
+        'All market providers are unavailable, so mock market data was used',
+      results: {
+        data: {
+          jobId: 1,
+        },
+      },
+    });
   });
 });
