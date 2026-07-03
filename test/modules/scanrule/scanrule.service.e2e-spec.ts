@@ -48,4 +48,18 @@ describe('ScanruleService - validateScanRule', () => {
       'Invalid indicator ownership',
     );
   });
+
+  it('Should throw Invalid indicator ownership when indicators != indicatorIds', async () => {
+    specPrismaFindMany.mockReturnValue([1]);
+    expect(await service.validateScanRule(specLogic, 1)).toEqual({
+      type: 'condition',
+      timeFrames: '1d',
+      operator: 'cross_above',
+      left: { type: 'indicator', indicatorId: 1 },
+      right: {
+        type: 'value',
+        value: 10,
+      },
+    });
+  });
 });
