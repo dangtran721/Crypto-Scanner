@@ -26,7 +26,7 @@ export class IndicatorService {
     try {
       schema.parse(dto.config);
     } catch (error) {
-      throw new BadRequestException('Invalid config for indicator');
+      throw new BadRequestException(`Invalid config ${error}`);
     }
 
     const strategy = this.strategyMap.getStrategy(dto.type);
