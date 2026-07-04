@@ -1,4 +1,3 @@
-import { Indicator } from '@prisma/client';
 import { ScanruleService } from 'src/modules/scanrule/scanrule.service';
 import { ScanCondition } from 'src/modules/scanrule/types';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -10,15 +9,6 @@ const specPrismaService = {
 } as unknown as PrismaService;
 
 const service = new ScanruleService(specPrismaService);
-
-//Indicator
-const specIndicator = {
-  id: 1,
-  type: 'EMA',
-  userId: 1,
-  config: { period: 34 },
-  createdAt: new Date(),
-} as Indicator;
 
 const specInvalidLogic = {
   type: 'condition',
